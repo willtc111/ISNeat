@@ -1,6 +1,6 @@
 package NeuralNetwork;
 
-import java.util.ArrayList;
+import java.util.Map;
 
 import Evolution.ConnectionGene;
 import Evolution.Genome;
@@ -18,21 +18,23 @@ public class NeuralNetworkBuilder {
 	/**
 	 * 
 	 * @param genome	The genome representing the network
+	 * @param inputs	Map for naming the input nodes
+	 * @param outputs	Map for naming the output nodes
 	 * @return			The constructed neural network
 	 */
-	public NeuralNetwork build( Genome genome ) {
-		ArrayList<NodeGene> nodes = genome.getNodes();
-		ArrayList<ConnectionGene> connections = genome.getConnections();
+	public NeuralNetwork build( Genome genome, Map<String, Integer> inputs, Map<String, Integer> outputs ) {
 		
-		// find highest node id.
+		// find highest node id and collect input/output nodes
 		int maxNode = 0;
-		for( NodeGene node : nodes ) {
+		for( NodeGene node : genome.getNodes() ) {
 			maxNode = Math.max(node.getId(), maxNode);
 		}
 		
-		NeuralNetwork nn = new NeuralNetwork(maxNode);
+		// Create the unconnected network containing the necessary nodes
+		NeuralNetwork nn = new NeuralNetwork(maxNode, inputs, outputs);
 		
-		for( ConnectionGene c : connections ) {
+		// Add the connections to the network
+		for( ConnectionGene c : genome.getConnections() ) {
 			nn.setWeight(c.getIn(), c.getOut(), c.getWeight());
 		}
 		

@@ -33,10 +33,18 @@ public class Genome {
 		}
 	}
 	
+	/**
+	 * Getter for node list
+	 * @return	The node list
+	 */
 	public ArrayList<NodeGene> getNodes() {
 		return nodes;
 	}
 	
+	/**
+	 * Getter for the connection list
+	 * @return	The connection list
+	 */
 	public ArrayList<ConnectionGene> getConnections() {
 		return connections;
 	}
