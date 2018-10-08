@@ -1,10 +1,10 @@
-package NeuralNetwork;
+package neuralnetwork;
 
 import java.util.Map;
 
-import Evolution.ConnectionGene;
-import Evolution.Genome;
-import Evolution.NodeGene;
+import evolution.ConnectionGene;
+import evolution.Genome;
+import evolution.NodeGene;
 
 /**
  * Builds neural networks

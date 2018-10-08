@@ -1,4 +1,4 @@
-package Evolution;
+package evolution;
 
 public class ConnectionGene {
 
