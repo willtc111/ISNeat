@@ -1,3 +1,5 @@
+import java.io.FileNotFoundException;
+
 import evolution.Evolver;
 import task.CarClassifyTask;
 
@@ -9,8 +11,16 @@ import task.CarClassifyTask;
 public class ISNeat {
 
 	public static void main(String[] args) {
-		CarClassifyTask cct = new CarClassifyTask();
-		Evolver evolver = new Evolver(cct);
+		CarClassifyTask cct;
+		try {
+			cct = new CarClassifyTask("car.data");
+
+			Evolver evolver = new Evolver(cct);
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
 	}
 
 }
