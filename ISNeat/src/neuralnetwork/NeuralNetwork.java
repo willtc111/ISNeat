@@ -18,7 +18,7 @@ public class NeuralNetwork {
 		this.outputs = outputs;
 	}
 	
-	public void update() {
+	public void updateOnce() {
 		double[] newStates = new double[states.length];
 		
 		for( int t = 0; t < states.length; t++ ) {
@@ -37,6 +37,28 @@ public class NeuralNetwork {
 		states = newStates;
 	}
 	
+	public void updateAll() {
+		// no matter how many nodes there are, this is guaranteed to update all of them at least once
+		updateUntilSteady(states.length);
+	}
+	
+	public void updateUntilSteady(int max) {
+		int count = 0;
+		double[] oldStates = null;
+		do {
+			oldStates = states.clone();
+			updateOnce();
+		} while( stateHasChanged(oldStates) || ++count < max );
+	}
+	
+	private boolean stateHasChanged( double[] old ) {
+		for( int i = 0; i < states.length; i++ ) {
+			if( states[i] != old[i] ) {
+				return true;
+			}
+		}
+		return false;
+	}
 	public void setInputs(Map<String, Double> values) {
 		for( String name : values.keySet() ) {
 			states[inputs.get(name)] = values.get(name);

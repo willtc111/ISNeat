@@ -26,10 +26,14 @@ public class Genome {
 			this.nodes.add(n.clone());
 		}
 		
-		// Deep copy of the connections
-		this.connections = new ArrayList<ConnectionGene>(connections.size());
-		for( ConnectionGene c : connections ) {
-			this.connections.add(c.clone());
+		if( connections != null ) {
+			// Deep copy of the connections
+			this.connections = new ArrayList<ConnectionGene>(connections.size());
+			for( ConnectionGene c : connections ) {
+				this.connections.add(c.clone());
+			}
+		} else {
+			this.connections = new ArrayList<ConnectionGene>();
 		}
 	}
 	

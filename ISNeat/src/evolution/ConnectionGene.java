@@ -1,8 +1,6 @@
 package evolution;
 
 public class ConnectionGene {
-
-	private static int nextInnov = 0;
 	
 	private int innov;
 	private double weight;
@@ -10,8 +8,8 @@ public class ConnectionGene {
 	private int out;
 	private boolean enabled;
 	
-	public ConnectionGene( double weight, int in, int out ) {
-		this.innov = nextInnov++;
+	public ConnectionGene( int innov, double weight, int in, int out ) {
+		this.innov = innov;
 		this.weight = weight;
 		this.in = in;
 		this.out = out;

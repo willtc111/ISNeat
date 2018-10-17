@@ -15,7 +15,7 @@ public class ISNeat {
 		try {
 			cct = new CarClassifyTask("car.data");
 
-			Evolver evolver = new Evolver(cct);
+			Evolver evolver = new Evolver(cct, 100);
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

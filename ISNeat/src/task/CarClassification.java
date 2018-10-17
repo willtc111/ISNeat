@@ -5,14 +5,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CarClassification {
-	
+	private static final double ONETHIRD = (1.0/3.0);
+	private static final double TWOTHIRDS = (2.0/3.0);
 	private static final Map<String, Double> classes;
 	static {
 		Map<String, Double> map = new HashMap<String, Double>();
 		map.put("unacc", 0.0);
-		map.put("acc",   0.25);
-		map.put("good",  0.5);
-		map.put("vgood", 0.75);
+		map.put("acc",   ONETHIRD);
+		map.put("good",  TWOTHIRDS);
+		map.put("vgood", 1.0);
 		classes = Collections.unmodifiableMap(map);
 	}
 	public final String classification;
@@ -21,9 +22,9 @@ public class CarClassification {
 	static {
 		Map<String, Double> map = new HashMap<String, Double>();
 		map.put("low",   0.0);
-		map.put("med",   0.25);
-		map.put("high",  0.5);
-		map.put("vhigh", 0.75);
+		map.put("med",   ONETHIRD);
+		map.put("high",  TWOTHIRDS);
+		map.put("vhigh", 0.);
 		prices = Collections.unmodifiableMap(map);
 	}
 	public final String buying;
@@ -33,9 +34,9 @@ public class CarClassification {
 	static {
 		Map<String, Double> map = new HashMap<String, Double>();
 		map.put("2",     0.0);
-		map.put("3",     0.25);
-		map.put("4",     0.5);
-		map.put("5more", 0.75);
+		map.put("3",     ONETHIRD);
+		map.put("4",     TWOTHIRDS);
+		map.put("5more", 1.0);
 		doorCounts = Collections.unmodifiableMap(map);
 	}
 	public final String doors;
@@ -44,8 +45,8 @@ public class CarClassification {
 	static {
 		Map<String, Double> map = new HashMap<String, Double>();
 		map.put("2",    0.0);
-		map.put("4",    (1.0/3.0));
-		map.put("more", (2.0/3.0));
+		map.put("4",    0.5);
+		map.put("more", 1.0);
 		personCounts = Collections.unmodifiableMap(map);
 	}
 	public final String persons;
@@ -54,8 +55,8 @@ public class CarClassification {
 	static {
 		Map<String, Double> map = new HashMap<String, Double>();
 		map.put("small", 0.0);
-		map.put("med",   (1.0/3.0));
-		map.put("big",   (2.0/3.0));
+		map.put("med",   0.5);
+		map.put("big",   1.0);
 		lugSizes = Collections.unmodifiableMap(map);
 	}
 	public final String lugBoot;
@@ -64,13 +65,13 @@ public class CarClassification {
 	static {
 		Map<String, Double> map = new HashMap<String, Double>();
 		map.put("low",  0.0);
-		map.put("med",  (1.0/3.0));
-		map.put("high", (2.0/3.0));
+		map.put("med",  0.5);
+		map.put("high", 1.0);
 		safties = Collections.unmodifiableMap(map);
 	}
 	public final String safety;
 	
-	private final double[] inputValues;
+	private final Map<String, Double> inputValues;
 	private final double outputValue;
 	
 	public CarClassification( String[] attributes ) throws Exception {
@@ -79,36 +80,57 @@ public class CarClassification {
 		}
 		
 		// Store the attributes and calculate the input/output decimal values.
-		inputValues = new double[6];
+		inputValues = new HashMap<String, Double>();
 		
 		buying = attributes[0];
-		inputValues[0] = prices.get(buying);
+		inputValues.put("buying", prices.get(buying));
 		
 		maint = attributes[1];
-		inputValues[1] = prices.get(maint);
+		inputValues.put("maint", prices.get(maint));
 		
 		doors = attributes[2];
-		inputValues[2] = doorCounts.get(doors);
+		inputValues.put("doors", doorCounts.get(doors));
 		
 		persons = attributes[3];
-		inputValues[3] = personCounts.get(persons);
+		inputValues.put("persons", personCounts.get(persons));
 		
 		lugBoot = attributes[4];
-		inputValues[4] = lugSizes.get(lugBoot);
+		inputValues.put("lugBoot", lugSizes.get(lugBoot));
 		
 		safety = attributes[5];
-		inputValues[5] = safties.get(safety);
+		inputValues.put("safety", safties.get(safety));
 		
 		classification = attributes[6];
 		outputValue = classes.get(classification);
 	}
 	
-	public double[] getInputs() {
+	/**
+	 * The correctness of the output, on a scale from 0.0 to 1.0.
+	 * @param out	The value to check
+	 * @return		How correct the value is
+	 */
+	public double outputCorrectness( double out ) {
+		return 1.0 - outputWrongness(out);
+	}
+	
+	/**
+	 * The wrongness of the output, on a scale from 0.0 to 1.0 
+	 * @param out	The value to check
+	 * @return		How wrong the value is
+	 */
+	public double outputWrongness( double out ) {
+		// ensure output is in the range of 0.0 to 1.0
+		if( out > 1.0 ) out = 1.0;
+		else if( out < 0 ) out = 0;
+		
+		return Math.abs(outputValue - out);
+	}
+	
+	public Map<String, Double> getInputs() {
 		return inputValues;
 	}
 	
 	public double getOutput() {
 		return outputValue;
 	}
-	
 }

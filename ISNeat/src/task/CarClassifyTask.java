@@ -2,14 +2,17 @@ package task;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 import neuralnetwork.NeuralNetwork;
 
-public class CarClassifyTask extends Task {
+public class CarClassifyTask implements Task {
 	
 	LinkedList<CarClassification> carList;
 	
@@ -37,21 +40,26 @@ public class CarClassifyTask extends Task {
 	}
 	
 	@Override
-	public String[] getInputs() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<String> getInputs() {
+		Set<String> inputSet = carList.getFirst().getInputs().keySet();
+		List<String> inputList = new ArrayList<String>( inputSet );
+		Collections.sort( inputList );
+		return inputList;
 	}
 
 	@Override
-	public String[] getOutputs() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<String> getOutputs() {
+		return Arrays.asList("classification");
 	}
 
 	@Override
 	public double calculateFitness(NeuralNetwork neuralNetwork) {
-		// TODO Auto-generated method stub
-		return 0;
+		double numCorrect = 0;
+		for( CarClassification c : carList ) {
+			neuralNetwork.setInputs(c.getInputs());
+			neuralNetwork.updateAll();
+			numCorrect += c.outputCorrectness( neuralNetwork.getOutputs().get("classification") );
+		}
+		return numCorrect / carList.size();
 	}
-
 }
