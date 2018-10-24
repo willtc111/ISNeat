@@ -24,7 +24,7 @@ public class CarClassification {
 		map.put("low",   0.0);
 		map.put("med",   ONETHIRD);
 		map.put("high",  TWOTHIRDS);
-		map.put("vhigh", 0.);
+		map.put("vhigh", 1.0);
 		prices = Collections.unmodifiableMap(map);
 	}
 	public final String buying;

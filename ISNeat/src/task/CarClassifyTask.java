@@ -17,9 +17,10 @@ public class CarClassifyTask implements Task {
 	LinkedList<CarClassification> carList;
 	
 	public CarClassifyTask( String filename ) throws FileNotFoundException {
-		// open file and a scanner for it
-		File file = new File( filename );
-		Scanner scan = new Scanner( file );
+		// open data file and a scanner for it
+		Scanner scan = new Scanner( new File(filename) );
+		
+		carList = new LinkedList<CarClassification>();
 		
 		// Read in lines
 		while( scan.hasNextLine() ) {

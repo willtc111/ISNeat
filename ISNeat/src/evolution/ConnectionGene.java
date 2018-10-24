@@ -1,6 +1,6 @@
 package evolution;
 
-public class ConnectionGene {
+public class ConnectionGene implements Comparable<ConnectionGene> {
 	
 	private int innov;
 	private double weight;
@@ -26,6 +26,11 @@ public class ConnectionGene {
 	
 	public ConnectionGene clone() {
 		return new ConnectionGene(innov, weight, in, out, enabled);
+	}
+	
+	@Override
+	public int compareTo(ConnectionGene other) {
+		return innov - other.getInnov();
 	}
 	
 	public int getInnov() {
@@ -59,4 +64,5 @@ public class ConnectionGene {
 	public boolean isEnabled() {
 		return enabled;
 	}
+
 }

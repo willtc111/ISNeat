@@ -2,7 +2,6 @@ package evolution;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import task.Task;
@@ -16,6 +15,8 @@ public class Evolver {
 	private Map<String, Integer> outputNodeMap;
 	
 	private ArrayList<Genome> population;
+	
+	private int nextInnovNum = 0;
 	
 	public Evolver(Task task, int populationSize) {
 		String[] inputArray = task.getInputs().toArray( new String[0] );
@@ -37,6 +38,8 @@ public class Evolver {
 			outputNodeMap.put( outputArray[i], outputId );
 			initialNodes.add( new NodeGene(outputId, NodeType.OUTPUT) );
 		}
+		
+		nextInnovNum = outputArray.length + inputArray.length;
 		
 		// Initialize the population.
 		population = new ArrayList<Genome>(populationSize);
