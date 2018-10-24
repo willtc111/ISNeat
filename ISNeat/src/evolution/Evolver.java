@@ -10,15 +10,27 @@ import task.Task;
  * Primary class to perform the genetic algorithm
  */
 public class Evolver {
+	// These will need to be experimentally determined, may even vary based on problem
+	private static final double COMPATABILITY_THRESHOLD = 2.0;
+	private static final double C1 = 1.0;	// constant multiplier for excess gene differences
+	private static final double C2 = 1.0;	// constant multiplier for disjoint gene differences
+	private static final double C3 = 1.0;	// constant multiplier for gene weight differences
 	
+	private int nextInnovNum;
+	
+	// The mapping from task inpout/output names to node id's.
 	private Map<String, Integer> inputNodeMap;
 	private Map<String, Integer> outputNodeMap;
 	
-	private ArrayList<Genome> population;
+	// The task to be trained for
+	private Task task;
 	
-	private int nextInnovNum = 0;
+	// The population of organisms
+	private Population population;
 	
 	public Evolver(Task task, int populationSize) {
+		this.task = task;
+		
 		String[] inputArray = task.getInputs().toArray( new String[0] );
 		String[] outputArray = task.getOutputs().toArray( new String[0] );
 		
@@ -42,7 +54,7 @@ public class Evolver {
 		nextInnovNum = outputArray.length + inputArray.length;
 		
 		// Initialize the population.
-		population = new ArrayList<Genome>(populationSize);
+		population = new Population();
 		for( int i = 0; i < populationSize; i++ ) {
 			// start with no connections, bare minimum!
 			population.add(new Genome(initialNodes, null) );

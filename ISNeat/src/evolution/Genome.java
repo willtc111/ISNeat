@@ -1,11 +1,14 @@
 package evolution;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 
 public class Genome {
 
 	private ArrayList<NodeGene> nodes;
 	private ArrayList<ConnectionGene> connections;
+	
+	private double fitness = 0;
 	
 	/**
 	 * Cloning constructor
@@ -38,11 +41,12 @@ public class Genome {
 		}
 	}
 	
-	public double getDistance( Genome other, double c1, double c2, double c3 ) {
+	public double calculateDistance( Genome other, double c1, double c2, double c3 ) {
 		ArrayList<ConnectionGene> otherGenes = other.getConnections();
 		
 		// Calculate the normalization factor (size of larger of two genomes)
 		double N = Math.max(connections.size(), otherGenes.size());
+		// If significantly small, don't normalize -> N=1
 		if( N < 20 ) N = 1;
 
 		if( connections.size() == 0 ) {
@@ -111,8 +115,6 @@ public class Genome {
 			// return sum of normalized connection differences
 			return (c1 * numExcess / N) + (c2 * numDisjoint / N) + (c3 * weightDiff);
 		}
-		
-		
 	}
 	
 	/**
@@ -129,5 +131,20 @@ public class Genome {
 	 */
 	public ArrayList<ConnectionGene> getConnections() {
 		return connections;
+	}
+	
+	public double getFitness() {
+		return fitness;
+	}
+	
+	public void setFitness( double fitness ) {
+		this.fitness = fitness;
+	}
+	
+	public static class BY_FITNESS implements Comparator<Genome> {
+		@Override
+		public int compare(Genome a, Genome b) {
+			return Double.compare(a.getFitness(), b.getFitness());
+		};
 	}
 }
