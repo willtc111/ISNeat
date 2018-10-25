@@ -6,26 +6,30 @@ import java.util.Random;
 
 public class Species {
 
+	private int id;
 	private List<Genome> organisms;
 	private Genome representative = null;
 	
 	
-	public Species( List<Genome> firstMembers ) {
+	public Species( int id, List<Genome> firstMembers ) {
+		this.id = id;
 		organisms = firstMembers;
 	}
 	
-	private Species( Genome representative ) {
+	// don't want anyone except species setting the representative of the species
+	private Species( int id, Genome representative ) {
+		this.id = id;
 		organisms = new LinkedList<Genome>();
 		this.representative = representative;
 	}
 
 	/**
-	 * Get a new species with no members, but with
-	 * a representative taken from this generation.
+	 * Clone the species, keeping no members, but
+	 * taking a representative from this generation.
 	 * @return an empty species
 	 */
 	public Species getNextGenSpecies() {
-		return new Species(getRepresentative());
+		return new Species(id, getRepresentative());
 	}
 	
 	public Genome getRepresentative() {
@@ -37,6 +41,12 @@ public class Species {
 	
 	public void updateRepresentative() {
 		representative = organisms.get(new Random().nextInt(organisms.size()));;
+	}
+	
+	public void shareFitnesses() {
+		for( Genome genome : organisms ) {
+			genome.setIndividualFitness(this.size());
+		}
 	}
 	
 	public List<Genome> getOrganisms() {

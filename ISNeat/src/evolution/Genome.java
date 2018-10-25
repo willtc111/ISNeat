@@ -10,6 +10,7 @@ public class Genome {
 	private List<ConnectionGene> connections;
 	
 	private double fitness = 0;
+	private double sharedFitness = 0;
 	
 	/**
 	 * Cloning constructor
@@ -134,18 +135,35 @@ public class Genome {
 		return connections;
 	}
 	
-	public double getFitness() {
+	public double getIndividualFitness() {
 		return fitness;
 	}
 	
-	public void setFitness( double fitness ) {
+	public void setIndividualFitness( double fitness ) {
 		this.fitness = fitness;
 	}
 	
-	public static class BY_FITNESS implements Comparator<Genome> {
+	public double getSharedFitness() {
+		return sharedFitness;
+	}
+	
+	public void setSharedFitness( int speciesSize ) {
+		this.sharedFitness = fitness / speciesSize;
+	}
+	
+	// Comparators:
+	
+	public static class BY_INDIVIDUAL_FITNESS implements Comparator<Genome> {
 		@Override
 		public int compare(Genome a, Genome b) {
-			return Double.compare(a.getFitness(), b.getFitness());
+			return Double.compare(a.getIndividualFitness(), b.getIndividualFitness());
+		};
+	}
+	
+	public static class BY_SHARED_FITNESS implements Comparator<Genome> {
+		@Override
+		public int compare(Genome a, Genome b) {
+			return Double.compare(a.getSharedFitness(), b.getSharedFitness());
 		};
 	}
 }
