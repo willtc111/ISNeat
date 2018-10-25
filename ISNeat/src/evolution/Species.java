@@ -1,31 +1,53 @@
 package evolution;
 
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 
 public class Species {
 
-	LinkedList<Genome> organisms;
-	double sharedFitness;
+	private List<Genome> organisms;
+	private Genome representative = null;
 	
 	
-	public Species( Genome firstMember ) {
-		organisms = new LinkedList<Genome>(Arrays.asList(firstMember));
+	public Species( List<Genome> firstMembers ) {
+		organisms = firstMembers;
+	}
+	
+	private Species( Genome representative ) {
+		organisms = new LinkedList<Genome>();
+		this.representative = representative;
+	}
+
+	/**
+	 * Get a new species with no members, but with
+	 * a representative taken from this generation.
+	 * @return an empty species
+	 */
+	public Species getNextGenSpecies() {
+		return new Species(getRepresentative());
 	}
 	
 	public Genome getRepresentative() {
-		return organisms.peekFirst();
+		if( representative == null ) {
+			updateRepresentative();
+		}
+		return representative;
 	}
 	
-	public double getSharedFitness() {
-		return sharedFitness;
+	public void updateRepresentative() {
+		representative = organisms.get(new Random().nextInt(organisms.size()));;
 	}
 	
-	public static class BY_SHARED_FITNESS implements Comparator<Species> {
-		@Override
-		public int compare(Species a, Species b) {
-			return Double.compare(a.getSharedFitness(), b.getSharedFitness());
-		};
+	public List<Genome> getOrganisms() {
+		return organisms;
+	}
+	
+	public void add(Genome genome) {
+		organisms.add(genome);
+	}
+	
+	public int size() {
+		return organisms.size();
 	}
 }

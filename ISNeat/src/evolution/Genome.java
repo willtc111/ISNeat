@@ -2,11 +2,12 @@ package evolution;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
 public class Genome {
 
-	private ArrayList<NodeGene> nodes;
-	private ArrayList<ConnectionGene> connections;
+	private List<NodeGene> nodes;
+	private List<ConnectionGene> connections;
 	
 	private double fitness = 0;
 	
@@ -23,7 +24,7 @@ public class Genome {
 	 * @param nodes Nodes to clone
 	 * @param connections Connections to clone
 	 */
-	public Genome( ArrayList<NodeGene> nodes, ArrayList<ConnectionGene> connections ) {
+	public Genome( List<NodeGene> nodes, List<ConnectionGene> connections ) {
 		// Deep copy of the nodes
 		this.nodes = new ArrayList<NodeGene>(nodes.size());
 		for( NodeGene n : nodes ) {
@@ -42,7 +43,7 @@ public class Genome {
 	}
 	
 	public double calculateDistance( Genome other, double c1, double c2, double c3 ) {
-		ArrayList<ConnectionGene> otherGenes = other.getConnections();
+		List<ConnectionGene> otherGenes = other.getConnections();
 		
 		// Calculate the normalization factor (size of larger of two genomes)
 		double N = Math.max(connections.size(), otherGenes.size());
@@ -121,7 +122,7 @@ public class Genome {
 	 * Getter for node list
 	 * @return	The node list
 	 */
-	public ArrayList<NodeGene> getNodes() {
+	public List<NodeGene> getNodes() {
 		return nodes;
 	}
 	
@@ -129,7 +130,7 @@ public class Genome {
 	 * Getter for the connection list
 	 * @return	The connection list
 	 */
-	public ArrayList<ConnectionGene> getConnections() {
+	public List<ConnectionGene> getConnections() {
 		return connections;
 	}
 	

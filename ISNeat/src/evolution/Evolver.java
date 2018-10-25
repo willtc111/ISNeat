@@ -2,6 +2,8 @@ package evolution;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import task.Task;
@@ -11,10 +13,10 @@ import task.Task;
  */
 public class Evolver {
 	// These will need to be experimentally determined, may even vary based on problem
-	private static final double COMPATABILITY_THRESHOLD = 2.0;
-	private static final double C1 = 1.0;	// constant multiplier for excess gene differences
-	private static final double C2 = 1.0;	// constant multiplier for disjoint gene differences
-	private static final double C3 = 1.0;	// constant multiplier for gene weight differences
+	public static final double COMPATABILITY_THRESHOLD = 2.0;
+	public static final double C1 = 1.0;	// constant multiplier for excess gene differences
+	public static final double C2 = 1.0;	// constant multiplier for disjoint gene differences
+	public static final double C3 = 1.0;	// constant multiplier for gene weight differences
 	
 	private int nextInnovNum;
 	
@@ -34,7 +36,7 @@ public class Evolver {
 		String[] inputArray = task.getInputs().toArray( new String[0] );
 		String[] outputArray = task.getOutputs().toArray( new String[0] );
 		
-		ArrayList<NodeGene> initialNodes = new ArrayList<NodeGene>(inputArray.length + outputArray.length);
+		List<NodeGene> initialNodes = new LinkedList<NodeGene>();
 		
 		// Make the initial input nodes and the input map
 		inputNodeMap = new HashMap<String, Integer>();
