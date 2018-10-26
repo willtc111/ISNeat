@@ -8,10 +8,12 @@ import java.util.ListIterator;
 public class Population {
 	
 	private int nextSpeciesId = 0;
+	private int generationNumber;
 	
 	List<Species> population;
 	
 	public Population() {
+		generationNumber = 0;
 		population = new LinkedList<Species>();
 	}
 	
@@ -26,7 +28,7 @@ public class Population {
 				return;
 			}
 		}
-		population.add(new Species(nextSpeciesId++, Arrays.asList(genome)));
+		population.add(new Species(generationNumber, nextSpeciesId++, Arrays.asList(genome)));
 	}
 	
 	public int size() {
@@ -86,7 +88,7 @@ public class Population {
 			}
 			// make new species
 			if( !hasSpecies ) {
-				nextGenSpecies.add(new Species(nextSpeciesId++, Arrays.asList(genome)));
+				nextGenSpecies.add(new Species(generationNumber, nextSpeciesId++, Arrays.asList(genome)));
 			}
 		}
 		

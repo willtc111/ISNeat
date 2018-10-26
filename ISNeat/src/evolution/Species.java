@@ -7,20 +7,21 @@ import java.util.Random;
 public class Species {
 
 	private int id;
+	private int startGen;
+	
 	private List<Genome> organisms;
 	private Genome representative = null;
 	
 	
-	public Species( int id, List<Genome> firstMembers ) {
+	public Species( int startGen, int id, List<Genome> firstMembers ) {
 		this.id = id;
 		organisms = firstMembers;
 	}
 	
-	// don't want anyone except species setting the representative of the species
-	private Species( int id, Genome representative ) {
-		this.id = id;
+	private Species( Species old ) {
+		this.id = old.getId();
 		organisms = new LinkedList<Genome>();
-		this.representative = representative;
+		this.representative = old.getRepresentative();
 	}
 
 	/**
@@ -29,7 +30,8 @@ public class Species {
 	 * @return an empty species
 	 */
 	public Species getNextGenSpecies() {
-		return new Species(id, getRepresentative());
+		updateRepresentative();
+		return new Species(this);
 	}
 	
 	public Genome getRepresentative() {
@@ -59,5 +61,13 @@ public class Species {
 	
 	public int size() {
 		return organisms.size();
+	}
+	
+	public int getStartGen() {
+		return startGen;
+	}
+	
+	public int getId() {
+		return id;
 	}
 }
