@@ -19,6 +19,7 @@ public class Evolver {
 	public static final double C3 = 1.0;	// constant multiplier for gene weight differences
 	
 	private int nextInnovNum;
+	private int nextNodeNum;
 	
 	// The mapping from task inpout/output names to node id's.
 	private Map<String, Integer> inputNodeMap;
@@ -53,7 +54,8 @@ public class Evolver {
 			initialNodes.add( new NodeGene(outputId, NodeType.OUTPUT) );
 		}
 		
-		nextInnovNum = outputArray.length + inputArray.length;
+		nextNodeNum = outputArray.length + inputArray.length;
+		nextInnovNum = 0;
 		
 		// Initialize the population.
 		population = new Population();

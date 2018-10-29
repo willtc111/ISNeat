@@ -1,11 +1,16 @@
 package evolution;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class Genome {
 
+	private final static double MUTATION_SCALAR = 0.25;
+	
 	private List<NodeGene> nodes;
 	private List<ConnectionGene> connections;
 	
@@ -41,6 +46,98 @@ public class Genome {
 		} else {
 			this.connections = new ArrayList<ConnectionGene>();
 		}
+	}
+
+	/**
+	 * Mutate this genome's connection weights
+	 * 
+	 * @param mutationChance The probability for mutation to occurr on an individual weight
+	 */
+	public void mutateWeights( double mutationChance ) {
+		Random rand = new Random();
+		for( ConnectionGene c : connections ) {
+			if( rand.nextDouble() < mutationChance ) {
+				// mutate this connection
+				double alteration = MUTATION_SCALAR * rand.nextGaussian();
+				alteration = Math.max(-1.0, Math.min(1.0, alteration));
+				c.setWeight(c.getWeight() + alteration);
+				// TODO: should the weight value be -1/1 bound?  Maybe put a min/max check in the setWeight method itself.
+			}
+		}
+	}
+	
+	/**
+	 * Perform a mutation to add a connection.
+	 * 
+	 * @param innovationNumber The id of the next connection gene
+	 * @param latestConnections The list of new connections from this generation's mutations
+	 * @return The connection added by this mutation, or null if it already existed
+	 */
+	public ConnectionGene mutateAddConnection(int innovationNumber, final List<ConnectionGene> latestConnections ) {
+		Random rand = new Random();
+		
+		int to = nodes.get(rand.nextInt(nodes.size())).getId();
+		int from = nodes.get(rand.nextInt(nodes.size())).getId();
+		ConnectionGene newConnection = new ConnectionGene(innovationNumber, rand.nextDouble(), from, to);
+		
+		// check to make sure this connection doesn't already exist in the network.
+		for( ConnectionGene c : connections ) {
+			if( c.getIn() == from && c.getOut() == to ) {
+				// connection already exists in this very genome, don't make a new one.
+				return null;
+			}
+		}
+		
+		for( ConnectionGene c : latestConnections ) {
+			if( c.getIn() == from && c.getOut() == to ) {
+				// forget about that newly created connection, use the existing one with a random weight
+				newConnection = c.clone();
+				newConnection.setWeight(rand.nextDouble());
+				connections.add(newConnection);
+				
+				// return null to signify a new connection was not made
+				return null;
+			}
+		}
+		
+		connections.add(newConnection);
+		return newConnection;
+	}
+	
+	/**
+	 * Add a node by selecting a current connection and adding a node in the
+	 * middle of it, with two new connections going from the old starting
+	 * point to the new node, and from the new node to the old ending point.
+	 * 
+	 * @param innovationNumber The next connection's innovation number
+	 * @param nextNodeNumber The next node ID
+	 * @param latestConnections The list of new connections from this generation's mutations 
+	 * @return All of the connections added to the genome during this operation
+	 */
+	public List<ConnectionGene> mutateAddNode(int innovationNumber, int nextNodeNumber, List<ConnectionGene> latestConnections) {
+		// choose a connection to split
+		ConnectionGene removeMe = connections.get(new Random().nextInt(connections.size()));
+		connections.remove(removeMe);
+		
+		// make the new stuff
+		int from = removeMe.getIn();
+		int to = removeMe.getOut();
+		NodeGene newNode = new NodeGene(nextNodeNumber, NodeType.HIDDEN);
+		ConnectionGene firstConnection  = new ConnectionGene(innovationNumber,
+															 1.0,
+															 from,
+															 newNode.getId());
+		ConnectionGene secondConnection = new ConnectionGene(innovationNumber+1,
+															 removeMe.getWeight(),
+															 newNode.getId(),
+															 to);
+		
+		nodes.add(newNode);
+		connections.add(firstConnection);
+		connections.add(secondConnection);
+		
+		return Arrays.asList(firstConnection, secondConnection);
+		
 	}
 	
 	public double calculateDistance( Genome other, double c1, double c2, double c3 ) {
@@ -150,6 +247,7 @@ public class Genome {
 	public void setSharedFitness( int speciesSize ) {
 		this.sharedFitness = fitness / speciesSize;
 	}
+	
 	
 	// Comparators:
 	

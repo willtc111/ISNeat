@@ -42,7 +42,7 @@ public class Species {
 	}
 	
 	public void updateRepresentative() {
-		representative = organisms.get(new Random().nextInt(organisms.size()));;
+		representative = organisms.get(new Random().nextInt(organisms.size()));
 	}
 	
 	public void shareFitnesses() {
