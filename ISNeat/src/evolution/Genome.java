@@ -105,16 +105,17 @@ public class Genome {
 	}
 	
 	/**
-	 * Add a node by selecting a current connection and adding a node in the
-	 * middle of it, with two new connections going from the old starting
-	 * point to the new node, and from the new node to the old ending point.
+	 * Perform a mutation to add a new node by selecting a current connection
+	 * and adding a node in the middle of it, with two new connections going
+	 * from the old starting point to the new node, and from the new node to
+	 * the old ending point.
 	 * 
 	 * @param innovationNumber The next connection's innovation number
 	 * @param nextNodeNumber The next node ID
 	 * @param latestConnections The list of new connections from this generation's mutations 
 	 * @return All of the connections added to the genome during this operation
 	 */
-	public List<ConnectionGene> mutateAddNode(int innovationNumber, int nextNodeNumber, List<ConnectionGene> latestConnections) {
+	public List<ConnectionGene> mutateAddNode(int innovationNumber, int nextNodeNumber, List<Integer> latestNodeIds, List<ConnectionGene> latestConnections) {
 		// choose a connection to split
 		ConnectionGene removeMe = connections.get(new Random().nextInt(connections.size()));
 		connections.remove(removeMe);
@@ -132,12 +133,33 @@ public class Genome {
 															 newNode.getId(),
 															 to);
 		
+		// Check to make sure this hasn't been done before
+		for( ConnectionGene c1 : latestConnections ) {
+			for ( int n : latestNodeIds ) {
+				if( c1.getIn() == from && c1.getOut() == n ) {
+					for( ConnectionGene c2 : latestConnections ) {
+						if( c2.getIn() == n && c2.getOut() == to ) {
+							// This same node was added previously, duplicate them instead.
+							newNode = new NodeGene(n, NodeType.HIDDEN);
+							firstConnection = c1.clone();
+							connections.add(firstConnection);
+							secondConnection = c2.clone();
+							secondConnection.setWeight(Math.random());
+							connections.add(secondConnection);
+							
+							// Return null to signify that new connections were not made
+							return null;
+						}
+					}
+				}
+			}
+		}
+		
+		// add the new stuff and return the new connections
 		nodes.add(newNode);
 		connections.add(firstConnection);
 		connections.add(secondConnection);
-		
 		return Arrays.asList(firstConnection, secondConnection);
-		
 	}
 	
 	public double calculateDistance( Genome other, double c1, double c2, double c3 ) {
