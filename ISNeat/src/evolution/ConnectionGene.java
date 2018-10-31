@@ -1,6 +1,8 @@
 package evolution;
 
-public class ConnectionGene implements Comparable<ConnectionGene> {
+import java.util.Comparator;
+
+public class ConnectionGene {
 	
 	private int innov;
 	private double weight;
@@ -28,11 +30,6 @@ public class ConnectionGene implements Comparable<ConnectionGene> {
 		return new ConnectionGene(innov, weight, in, out, enabled);
 	}
 	
-	@Override
-	public int compareTo(ConnectionGene other) {
-		return innov - other.getInnov();
-	}
-	
 	public int getInnov() {
 		return innov;
 	}
@@ -42,7 +39,8 @@ public class ConnectionGene implements Comparable<ConnectionGene> {
 	}
 	
 	public void setWeight( Double weight ) {
-		this.weight = weight;
+		// TODO: figure out if this should actually be bounded.
+		this.weight = Math.max(-1.0, Math.min(1.0, weight));
 	}
 	
 	public int getIn() {
@@ -65,4 +63,14 @@ public class ConnectionGene implements Comparable<ConnectionGene> {
 		return enabled;
 	}
 
+	// Comparators:
+	public static Comparator<ConnectionGene> BY_INNOVATION_NUMBER() {
+		return new Comparator<ConnectionGene>() {
+			@Override
+			public int compare(ConnectionGene a, ConnectionGene b) {
+				return Integer.compare(a.getInnov(), b.getInnov());
+			}
+		};
+	}
+	
 }

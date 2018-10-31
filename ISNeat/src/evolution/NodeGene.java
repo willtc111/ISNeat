@@ -21,4 +21,14 @@ public class NodeGene {
 	public NodeType getType() {
 		return type;
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if( other instanceof NodeGene ) {
+			NodeGene otherNG = (NodeGene) other;
+			return (id == otherNG.getId()) && (type == otherNG.getType());
+		} else {
+			return false;
+		}
+	}
 }

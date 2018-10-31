@@ -22,7 +22,7 @@ public class NeuralNetworkBuilder {
 	 * @param outputs	Map for naming the output nodes
 	 * @return			The constructed neural network
 	 */
-	public NeuralNetwork build( Genome genome, Map<String, Integer> inputs, Map<String, Integer> outputs ) {
+	public static NeuralNetwork build( Genome genome, Map<String, Integer> inputs, Map<String, Integer> outputs ) {
 		
 		// find highest node id and collect input/output nodes
 		int maxNode = 0;
@@ -35,7 +35,9 @@ public class NeuralNetworkBuilder {
 		
 		// Add the connections to the network
 		for( ConnectionGene c : genome.getConnections() ) {
-			nn.setWeight(c.getIn(), c.getOut(), c.getWeight());
+			if( c.isEnabled() ) {
+				nn.setWeight(c.getIn(), c.getOut(), c.getWeight());
+			}
 		}
 		
 		return nn;

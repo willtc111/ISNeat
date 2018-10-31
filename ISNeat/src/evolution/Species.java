@@ -1,12 +1,14 @@
 package evolution;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
 public class Species {
 
-	private static final int IMMUNITY_TIME = 4;
+	private static final int IMMUNITY_TIME = 15;
 	private static final int HISTORY_LENGTH = 5;
 	
 	private int id;
@@ -102,6 +104,7 @@ public class Species {
 	}
 	
 	public List<Genome> getOrganisms() {
+		Collections.sort(organisms, Genome.BY_INDIVIDUAL_FITNESS());
 		return organisms;
 	}
 	
@@ -123,5 +126,23 @@ public class Species {
 	
 	public int getId() {
 		return id;
+	}
+	
+	public static Comparator<Species> BY_BEST_INDIVIDUAL_FITNESS() {
+		return new Comparator<Species>() {
+			@Override
+			public int compare(Species a, Species b) {
+				return Genome.BY_INDIVIDUAL_FITNESS().compare(a.getBestGenome(), b.getBestGenome());
+			}
+		};
+	}
+	
+	public static Comparator<Species> BY_BEST_SHARED_FITNESS() {
+		return new Comparator<Species>() {
+			@Override
+			public int compare(Species a, Species b) {
+				return Genome.BY_SHARED_FITNESS().compare(a.getBestGenome(), b.getBestGenome());
+			}
+		};
 	}
 }

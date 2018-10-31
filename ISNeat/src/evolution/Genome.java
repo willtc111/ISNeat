@@ -5,11 +5,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class Genome {
 
-	private final static double MUTATION_SCALAR = 0.25;
 	
 	private List<NodeGene> nodes;
 	private List<ConnectionGene> connections;
@@ -49,19 +49,24 @@ public class Genome {
 	}
 
 	/**
-	 * Mutate this genome's connection weights
+	 * Mutate this genome's connection weights.
 	 * 
-	 * @param mutationChance The probability for mutation to occurr on an individual weight
+	 * @param mutationChance The chance of a mutation occurring for any given weight
+	 * @param mutationScalar Scalar for the magnitude of any weight adjustment 
+	 * @param randomResetChance The chance to simply assign a new random weight
 	 */
-	public void mutateWeights( double mutationChance ) {
+	public void mutateWeights( double mutationChance, double mutationScalar, double randomResetChance ) {
 		Random rand = new Random();
 		for( ConnectionGene c : connections ) {
 			if( rand.nextDouble() < mutationChance ) {
-				// mutate this connection
-				double alteration = MUTATION_SCALAR * rand.nextGaussian();
-				alteration = Math.max(-1.0, Math.min(1.0, alteration));
-				c.setWeight(c.getWeight() + alteration);
-				// TODO: should the weight value be -1/1 bound?  Maybe put a min/max check in the setWeight method itself.
+				if( rand.nextDouble() < randomResetChance ) {
+					// mutate by setting weight randomly
+					c.setWeight(randomWeight());
+				} else {
+					// mutate this connection by a normally distributed amount (mean = 0)
+					double alteration = mutationScalar * rand.nextGaussian();
+					c.setWeight(c.getWeight() + alteration);
+				}
 			}
 		}
 	}
@@ -78,7 +83,7 @@ public class Genome {
 		
 		int to = nodes.get(rand.nextInt(nodes.size())).getId();
 		int from = nodes.get(rand.nextInt(nodes.size())).getId();
-		ConnectionGene newConnection = new ConnectionGene(innovationNumber, rand.nextDouble(), from, to);
+		ConnectionGene newConnection = new ConnectionGene(innovationNumber, randomWeight(), from, to);
 		
 		// check to make sure this connection doesn't already exist in the network.
 		for( ConnectionGene c : connections ) {
@@ -92,7 +97,7 @@ public class Genome {
 			if( c.getIn() == from && c.getOut() == to ) {
 				// forget about that newly created connection, use the existing one with a random weight
 				newConnection = c.clone();
-				newConnection.setWeight(rand.nextDouble());
+				newConnection.setWeight(randomWeight());
 				connections.add(newConnection);
 				
 				// return null to signify a new connection was not made
@@ -246,12 +251,28 @@ public class Genome {
 		return nodes;
 	}
 	
+	public Map<Integer, NodeGene> getNodeMap() {
+		HashMap<Integer, NodeGene> nods = new HashMap<Integer, NodeGene>();
+		for( NodeGene n : nodes ) {
+			nods.put(n.getId(), n);
+		}
+		return nods;
+	}
+	
 	/**
 	 * Getter for the connection list
 	 * @return	The connection list
 	 */
 	public List<ConnectionGene> getConnections() {
 		return connections;
+	}
+	
+	public Map<Integer, ConnectionGene> getConnectionMap() {
+		HashMap<Integer, ConnectionGene> cons = new HashMap<Integer, ConnectionGene>();
+		for( ConnectionGene c : connections ) {
+			cons.put(c.getInnov(), c);
+		}
+		return cons;
 	}
 	
 	public double getIndividualFitness() {
@@ -270,20 +291,32 @@ public class Genome {
 		this.sharedFitness = fitness / speciesSize;
 	}
 	
+	/**
+	 * Get a random value from -1 to 1
+	 * @return a double value from -1 to 1 (technically excluding 1)
+	 */
+	private static double randomWeight() {
+		return (Math.random() * 2) - 1;
+	}
+	
 	
 	// Comparators:
 	
-	public static class BY_INDIVIDUAL_FITNESS implements Comparator<Genome> {
-		@Override
-		public int compare(Genome a, Genome b) {
-			return Double.compare(a.getIndividualFitness(), b.getIndividualFitness());
+	public static Comparator<Genome> BY_INDIVIDUAL_FITNESS() {
+		return new Comparator<Genome>() {
+			@Override
+			public int compare(Genome a, Genome b) {
+				return Double.compare(a.getIndividualFitness(), b.getIndividualFitness());
+			}
 		};
 	}
 	
-	public static class BY_SHARED_FITNESS implements Comparator<Genome> {
-		@Override
-		public int compare(Genome a, Genome b) {
-			return Double.compare(a.getSharedFitness(), b.getSharedFitness());
+	public static Comparator<Genome> BY_SHARED_FITNESS() {
+		return new Comparator<Genome>() {
+			@Override
+			public int compare(Genome a, Genome b) {
+				return Double.compare(a.getSharedFitness(), b.getSharedFitness());
+			}
 		};
 	}
 }
