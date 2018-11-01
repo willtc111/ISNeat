@@ -31,7 +31,7 @@ public class NeuralNetworkBuilder {
 		}
 		
 		// Create the unconnected network containing the necessary nodes
-		NeuralNetwork nn = new NeuralNetwork(maxNode, inputs, outputs);
+		NeuralNetwork nn = new NeuralNetwork(maxNode+1, inputs, outputs);
 		
 		// Add the connections to the network
 		for( ConnectionGene c : genome.getConnections() ) {

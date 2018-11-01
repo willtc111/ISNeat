@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Random;
 
 public class Genome {
-
 	
 	private List<NodeGene> nodes;
 	private List<ConnectionGene> connections;
@@ -121,50 +120,54 @@ public class Genome {
 	 * @return All of the connections added to the genome during this operation
 	 */
 	public List<ConnectionGene> mutateAddNode(int innovationNumber, int nextNodeNumber, List<Integer> latestNodeIds, List<ConnectionGene> latestConnections) {
-		// choose a connection to split
-		ConnectionGene removeMe = connections.get(new Random().nextInt(connections.size()));
-		connections.remove(removeMe);
-		
-		// make the new stuff
-		int from = removeMe.getIn();
-		int to = removeMe.getOut();
-		NodeGene newNode = new NodeGene(nextNodeNumber, NodeType.HIDDEN);
-		ConnectionGene firstConnection  = new ConnectionGene(innovationNumber,
-															 1.0,
-															 from,
-															 newNode.getId());
-		ConnectionGene secondConnection = new ConnectionGene(innovationNumber+1,
-															 removeMe.getWeight(),
-															 newNode.getId(),
-															 to);
-		
-		// Check to make sure this hasn't been done before
-		for( ConnectionGene c1 : latestConnections ) {
-			for ( int n : latestNodeIds ) {
-				if( c1.getIn() == from && c1.getOut() == n ) {
-					for( ConnectionGene c2 : latestConnections ) {
-						if( c2.getIn() == n && c2.getOut() == to ) {
-							// This same node was added previously, duplicate them instead.
-							newNode = new NodeGene(n, NodeType.HIDDEN);
-							firstConnection = c1.clone();
-							connections.add(firstConnection);
-							secondConnection = c2.clone();
-							secondConnection.setWeight(Math.random());
-							connections.add(secondConnection);
-							
-							// Return null to signify that new connections were not made
-							return null;
+		if( connections.size() <= 0 ) {
+			return null;
+		} else {
+			// choose a connection to split
+			ConnectionGene removeMe = connections.get(new Random().nextInt(connections.size()));
+			connections.remove(removeMe);
+			
+			// make the new stuff
+			int from = removeMe.getIn();
+			int to = removeMe.getOut();
+			NodeGene newNode = new NodeGene(nextNodeNumber, NodeType.HIDDEN);
+			ConnectionGene firstConnection  = new ConnectionGene(innovationNumber,
+																 1.0,
+																 from,
+																 newNode.getId());
+			ConnectionGene secondConnection = new ConnectionGene(innovationNumber+1,
+																 removeMe.getWeight(),
+																 newNode.getId(),
+																 to);
+			
+			// Check to make sure this hasn't been done before
+			for( ConnectionGene c1 : latestConnections ) {
+				for ( int n : latestNodeIds ) {
+					if( c1.getIn() == from && c1.getOut() == n ) {
+						for( ConnectionGene c2 : latestConnections ) {
+							if( c2.getIn() == n && c2.getOut() == to ) {
+								// This same node was added previously, duplicate them instead.
+								newNode = new NodeGene(n, NodeType.HIDDEN);
+								firstConnection = c1.clone();
+								connections.add(firstConnection);
+								secondConnection = c2.clone();
+								secondConnection.setWeight(Math.random());
+								connections.add(secondConnection);
+								
+								// Return null to signify that new connections were not made
+								return null;
+							}
 						}
 					}
 				}
 			}
+			
+			// add the new stuff and return the new connections
+			nodes.add(newNode);
+			connections.add(firstConnection);
+			connections.add(secondConnection);
+			return Arrays.asList(firstConnection, secondConnection);
 		}
-		
-		// add the new stuff and return the new connections
-		nodes.add(newNode);
-		connections.add(firstConnection);
-		connections.add(secondConnection);
-		return Arrays.asList(firstConnection, secondConnection);
 	}
 	
 	public double calculateDistance( Genome other, double c1, double c2, double c3 ) {
@@ -306,7 +309,7 @@ public class Genome {
 		return new Comparator<Genome>() {
 			@Override
 			public int compare(Genome a, Genome b) {
-				return Double.compare(a.getIndividualFitness(), b.getIndividualFitness());
+				return -1 * Double.compare(a.getIndividualFitness(), b.getIndividualFitness());
 			}
 		};
 	}
@@ -315,7 +318,7 @@ public class Genome {
 		return new Comparator<Genome>() {
 			@Override
 			public int compare(Genome a, Genome b) {
-				return Double.compare(a.getSharedFitness(), b.getSharedFitness());
+				return -1 * Double.compare(a.getSharedFitness(), b.getSharedFitness());
 			}
 		};
 	}

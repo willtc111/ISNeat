@@ -19,7 +19,11 @@ public class NeuralNetwork {
 	}
 	
 	public void updateOnce() {
+		// copy states array
 		double[] newStates = new double[states.length];
+		for( int t = 0; t < states.length; t++ ) {
+			newStates[t] = states[t];
+		}
 		
 		for( int t = 0; t < states.length; t++ ) {
 			// update the newState node t using the values from the old state and connection weights.
@@ -30,7 +34,9 @@ public class NeuralNetwork {
 					newStates[t] += states[f] * connections[f][t];
 				}
 			}
-			newStates[t] /= count;	// Normalize
+			if( count > 0 ) {
+				newStates[t] /= count;	// Normalize
+			}
 		}
 		
 		// Overwrite old states
@@ -48,7 +54,8 @@ public class NeuralNetwork {
 		do {
 			oldStates = states.clone();
 			updateOnce();
-		} while( stateHasChanged(oldStates) || ++count < max );
+			count++;
+		} while( stateHasChanged(oldStates) && count < max );
 	}
 	
 	private boolean stateHasChanged( double[] old ) {
@@ -68,7 +75,8 @@ public class NeuralNetwork {
 	public Map<String, Double> getOutputs() {
 		Map<String, Double> values = new HashMap<String, Double>();
 		for( String name : outputs.keySet() ) {
-			values.put(name, states[outputs.get(name)]);
+			int index = outputs.get(name);
+			values.put(name, states[index]);
 		}
 		return values;
 	}

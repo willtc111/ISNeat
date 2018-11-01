@@ -26,29 +26,17 @@ public class Species {
 		organisms = firstMembers;
 	}
 	
-	private Species( Species old ) {
-		startGen = old.getStartGen();
-		this.id = old.getId();
-		organisms = new LinkedList<Genome>();
-		this.lastBestFitnesses = old.getLastBestFitnesses();
-		this.representative = old.getRepresentative();
-	}
-
-	/**
-	 * Clone the species, keeping no members, but
-	 * taking a representative from this generation.
-	 * @return an empty species
-	 */
-	public Species getNextGenSpecies() {
-		updateRepresentative();
-		
-		// update the lastBestFitness
+	public void updateFitnessHistory() {
 		for( int i = 0; i < lastBestFitnesses.length - 1; i++ ) {
 			lastBestFitnesses[i+1] = lastBestFitnesses[i];
 		}
 		lastBestFitnesses[0] = getBestGenome().getIndividualFitness();
-		
-		return new Species(this);
+	}
+	
+	public void cullTheWeak( int numSurvivors ) {
+		organisms.sort(Genome.BY_SHARED_FITNESS());
+		numSurvivors = Math.min(numSurvivors, organisms.size());
+		organisms = organisms.subList(0, numSurvivors);
 	}
 	
 	public Genome getBestGenome() {
@@ -59,6 +47,13 @@ public class Species {
 			}
 		}
 		return best; 
+	}
+	
+	public List<Genome> getNonBestGenomes() {
+		List<Genome> lameGenomes = new LinkedList<Genome>(organisms);
+		lameGenomes.remove(getBestGenome());
+		return lameGenomes;
+		
 	}
 	
 	/**
@@ -99,8 +94,16 @@ public class Species {
 	
 	public void shareFitnesses() {
 		for( Genome genome : organisms ) {
-			genome.setIndividualFitness(this.size());
+			genome.setSharedFitness(this.size());
 		}
+	}
+	
+	public double sumOfFitnesses() {
+		double sum = 0;
+		for( Genome genome : organisms ) {
+			sum += genome.getSharedFitness();
+		}
+		return sum;
 	}
 	
 	public List<Genome> getOrganisms() {
