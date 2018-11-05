@@ -63,6 +63,10 @@ public class ConnectionGene {
 		return enabled;
 	}
 
+	public String toString() {
+		return String.format("{%d:(%d,%d) %3.2f}", innov, in, out, weight);
+	}
+	
 	// Comparators:
 	public static Comparator<ConnectionGene> BY_INNOVATION_NUMBER() {
 		return new Comparator<ConnectionGene>() {

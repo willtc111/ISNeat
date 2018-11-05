@@ -1,9 +1,9 @@
 package evolution;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -79,9 +79,24 @@ public class Genome {
 	 */
 	public ConnectionGene mutateAddConnection(int innovationNumber, final List<ConnectionGene> latestConnections ) {
 		Random rand = new Random();
-		
-		int to = nodes.get(rand.nextInt(nodes.size())).getId();
-		int from = nodes.get(rand.nextInt(nodes.size())).getId();
+		List<Integer> toOptions = new LinkedList<Integer>();
+		List<Integer> fromOptions = new LinkedList<Integer>();
+		for( NodeGene n : nodes ) {
+			switch(n.getType()) {
+			case OUTPUT:
+				toOptions.add(n.getId());
+				break;
+			case INPUT:
+				fromOptions.add(n.getId());
+				break;
+			case HIDDEN:
+				toOptions.add(n.getId());
+				fromOptions.add(n.getId());
+				break;
+			}
+		}
+		int to = toOptions.get(rand.nextInt(toOptions.size()));
+		int from = fromOptions.get(rand.nextInt(fromOptions.size()));
 		ConnectionGene newConnection = new ConnectionGene(innovationNumber, randomWeight(), from, to);
 		
 		// check to make sure this connection doesn't already exist in the network.
@@ -119,7 +134,7 @@ public class Genome {
 	 * @param latestConnections The list of new connections from this generation's mutations 
 	 * @return All of the connections added to the genome during this operation
 	 */
-	public List<ConnectionGene> mutateAddNode(int innovationNumber, int nextNodeNumber, List<Integer> latestNodeIds, List<ConnectionGene> latestConnections) {
+	public List<ConnectionGene> mutateAddNode(int innovationNumber, int nextNodeNumber, List<ConnectionGene> latestConnections) {
 		if( connections.size() <= 0 ) {
 			return null;
 		} else {
@@ -140,23 +155,25 @@ public class Genome {
 																 newNode.getId(),
 																 to);
 			
-			// Check to make sure this hasn't been done before
+			// Check to make sure this hasn't been done before for innovation tracking purposes
 			for( ConnectionGene c1 : latestConnections ) {
-				for ( int n : latestNodeIds ) {
-					if( c1.getIn() == from && c1.getOut() == n ) {
-						for( ConnectionGene c2 : latestConnections ) {
-							if( c2.getIn() == n && c2.getOut() == to ) {
-								// This same node was added previously, duplicate them instead.
-								newNode = new NodeGene(n, NodeType.HIDDEN);
-								firstConnection = c1.clone();
-								connections.add(firstConnection);
-								secondConnection = c2.clone();
-								secondConnection.setWeight(Math.random());
-								connections.add(secondConnection);
-								
-								// Return null to signify that new connections were not made
-								return null;
-							}
+				if( c1.getIn() == from ) {
+					for( ConnectionGene c2 : latestConnections ) {
+						if( c1.getOut() == c2.getIn() && c2.getOut() == to ) {
+							// This same node was added previously, duplicate everything instead.
+							newNode = new NodeGene(c1.getOut(), NodeType.HIDDEN);
+							nodes.add(newNode);
+							
+							firstConnection = c1.clone();
+							firstConnection.setWeight(1.0);
+							connections.add(firstConnection);
+							
+							secondConnection = c2.clone();
+							secondConnection.setWeight(Math.random());
+							connections.add(secondConnection);
+							
+							// Return null to signify that new connections and a new node were not made
+							return null;
 						}
 					}
 				}
@@ -292,6 +309,15 @@ public class Genome {
 	
 	public void setSharedFitness( int speciesSize ) {
 		this.sharedFitness = fitness / speciesSize;
+	}
+	
+	public String toString() {
+		String s = String.format("#{%3.1f ", fitness);
+		for( ConnectionGene g : connections ) {
+			s = s + " " + g;
+		}
+		s = s + " }#";
+		return s;
 	}
 	
 	/**

@@ -88,10 +88,13 @@ public class Evolver {
 		Genome best = null;
 		Random rand = new Random();
 		double mutationChance = 0.8;
-		boolean isDone = false;	
+		boolean isDone = false;
+
+		List<ConnectionGene> latestConnections = new LinkedList<ConnectionGene>();
+		
 		while( !isDone ) {
 			generationNumber++;
-			System.out.println("Generation " + generationNumber + " starting!  Now using approximately " + (nextNodeNum-1) + " nodes.");	// TODO: debug
+			System.out.println("Generation " + generationNumber + " starting!  " + population.size() + " species.");	// TODO: debug
 			List<Species> nextGenPopulation = new LinkedList<Species>();
 			
 			// evaluate fitnesses
@@ -104,41 +107,66 @@ public class Evolver {
 					double fitness = task.calculateFitness(network);
 					// update the fitness value
 					g.setIndividualFitness(fitness);
+					
+					if( best == null || g.getIndividualFitness() > best.getIndividualFitness() ) {
+						best = g;
+					}
+
+					totalFitness += fitness; 
 				}
 				s.shareFitnesses();
 				s.updateFitnessHistory();
-				
-				if( !s.canBeTerminated(generationNumber) ) {
-					totalFitness += s.sumOfFitnesses();
-					nextGenPopulation.add(s);
-				}
+				s.updateRepresentative();
+				System.out.println(s);	// TODO: debug
 			}
-			System.out.println("\tTotalFitness =  " + totalFitness + "!");	// TODO: debug
+
+			double averageFitness = totalFitness / populationSize();
+			System.out.println("\tBest Fitness = " + best.getIndividualFitness() + "!");	// TODO: debug
 			
-			// Kill off the weak and perform crossover
+			// kill off the weak species
+			if( population.size() > 2 ) {
+				totalFitness = 0;
+				for( Species s : population ) {
+					if( !s.canBeTerminated(generationNumber, averageFitness) ) {
+						totalFitness += s.sumOfFitnesses();
+						nextGenPopulation.add(s);
+					}
+				}
+			} else {
+				nextGenPopulation = population;
+			}
+			
+			// Kill off the weak genomes and perform crossover
 			List<Genome> newbies = new LinkedList<Genome>();
 			ListIterator<Species> ngpop = nextGenPopulation.listIterator();
 			while( ngpop.hasNext() ) {
 				Species s = ngpop.next();
 				// remove the weakest organisms
 				double thisSpeciesFitSum = s.sumOfFitnesses();
-				int newSpeciesSize = (int) Math.round(populationSize * (thisSpeciesFitSum / totalFitness));
-				if( newSpeciesSize <= 0 ) {
-					// Species has died.  Too bad, so sad...
-					// just kidding, this might actually be too aggressive!
-					// TODO: Might need to account for whether or not a species can be terminated (gotta protext the newbies).
-					ngpop.remove();
-					// remove this species from the total fitness count
-					totalFitness -= thisSpeciesFitSum;
+				s.intendedSize = (int) Math.round(populationSize * (thisSpeciesFitSum / totalFitness));
+				if( s.intendedSize <= 0 ) {
+					
+				} else if( s.intendedSize == 1 ) {
+					// not enough organisms to do crossover within the species, but kill off any excess either way.
+					s.cullTheWeak(s.intendedSize);
+					// go ahead and roll the dice to try inter-species mating.
+					if( rand.nextDouble() <= INTERSPECIES_MATING_RATE && nextGenPopulation.size() > 1 ) {
+						// Lucky duck!
+						Genome parentA = s.getOrganisms().get(0);
+						List<Species> otherSpecies = new LinkedList<Species>(nextGenPopulation);
+						otherSpecies.remove(s);
+						List<Genome> otherOrganisms = otherSpecies.get(rand.nextInt(otherSpecies.size())).getOrganisms();
+						Genome parentB = otherOrganisms.get(rand.nextInt(otherOrganisms.size()));
+						newbies.add(crossover(parentA, parentB));
+					}
 					continue;
 				}
-				s.cullTheWeak(newSpeciesSize / 2);
+				s.cullTheWeak(s.intendedSize / 2);
 				
-				// Do crossover if there is more than one member of the species
+				// Do crossover if there is more than one member of the species remaining
 				if( s.size() >= 2 ) {
 					List<Genome> parents = new LinkedList<Genome>(s.getOrganisms());
 					parents.sort(Genome.BY_INDIVIDUAL_FITNESS());
-					
 					
 					ListIterator<Genome> parIt = parents.listIterator();
 					// mate the best organism with a random lucky member of the species other than itself
@@ -174,15 +202,39 @@ public class Evolver {
 					}
 				}
 			}
-			System.out.println("\tCrossover completed!");	// TODO: debug
+			System.out.println("\tCrossover completed!  " + (newbies.size() + populationSize(nextGenPopulation)) + " individuals.");	// TODO: debug
 			
-			// do mutations
-			List<ConnectionGene> latestConnections = new LinkedList<ConnectionGene>();
-			List<Integer> latestNodeIds = new LinkedList<Integer>();
+			// do mutations on all the parents
 			for( Species s : nextGenPopulation ) {
-				// mutate everyone except the champion from each species from the past generation
-				List<Genome> genesToMutate = s.getNonBestGenomes();
-				for( Genome g : genesToMutate ) {
+				List<Genome> genomesToMutate = null;
+				if( s.size() > 5 ) {
+					// for species with more than 5 organisms
+					genomesToMutate = s.getNonBestGenomes();
+					// the champion gets to move on unaltered
+					newbies.add(s.getBestGenome());
+				} else {
+					// otherwise everyone gets mutated.  Hooray!
+					genomesToMutate = s.getOrganisms();
+				}
+				
+				// Make up for any difference between actual size and how big species is allowed to be
+				// how many are in the species right now (not counting new children)
+				int currentSize = s.size();
+				// how many are accounted for after crossover and the default mutation list
+				int sizeToBe = currentSize * 2;
+				// difference in how big species SHOULD be and how big it WILL be
+				int numUnaccountedFor = s.intendedSize - sizeToBe;
+				for( int pick = 0; pick < numUnaccountedFor; pick++ ) {
+					// Clone a genome
+					Genome cloneForAdding = s.getOrganisms().get(pick%s.size());
+					genomesToMutate.add(new Genome(cloneForAdding));					
+				}
+				
+				// now that we have the genomes to work with, reset the species organism list.
+				s.clear();
+				
+				// mutate the genomes
+				for( Genome g : genomesToMutate ) {
 					// mutate weights
 					g.mutateWeights(mutationChance, MUTATION_SCALAR, RANDOM_RESET_MUTATION_CHANCE );
 					// structural mutations
@@ -192,22 +244,26 @@ public class Evolver {
 						if( change != null ) {
 							nextInnovNum++;
 							latestConnections.add(change);
+							System.out.println("\t\tAdded a connection!");	// TODO: debug
 						}
 					} else if( rand.nextDouble() < NODE_MUTATION_CHANCE ) {
 						// mutate nodes
-						List<ConnectionGene> changes = g.mutateAddNode(nextInnovNum, nextNodeNum, latestNodeIds, latestConnections);
+						List<ConnectionGene> changes = g.mutateAddNode(nextInnovNum, nextNodeNum, latestConnections);
 						if( changes != null ) {
 							nextInnovNum += 2;
 							latestConnections.addAll(changes);
-							latestNodeIds.add(nextNodeNum);
 							nextNodeNum++;
+							System.out.println("\t\tAdded a node!");	// TODO: debug
 						}
 					}
+					// add the mutated genome to the new organism pool.
+					newbies.add(g);
 				}
+				
 			}
-			System.out.println("\tMutation completed!");	// TODO: debug
+			System.out.println("\tMutation completed!  " + newbies.size() + " individuals.");	// TODO: debug
 			
-			// add the newbies to the species
+			// add the newbies to the population
 			population = speciate(nextGenPopulation, newbies);
 		}
 		return best;
@@ -310,6 +366,14 @@ public class Evolver {
 		return size;
 	}
 	
+	private int populationSize(List<Species> pop) {
+		int size = 0;
+		for( Species species : pop ) {
+			size += species.size();
+		}
+		return size;
+	}
+	
 	private List<Species> speciate( List<Species> species, List<Genome> organisms ) {
 		for( Genome genome : organisms ) {
 			boolean hasSpecies = false;
@@ -326,6 +390,16 @@ public class Evolver {
 				species.add(new Species(generationNumber, nextSpeciesId++, new LinkedList<Genome>(Arrays.asList(genome))));
 			}
 		}
+		
+		// remove any species that have no members
+		ListIterator<Species> si = species.listIterator();
+		while( si.hasNext() ) {
+			Species s = si.next();
+			if( s.size() <= 0 ) {
+				si.remove();
+			}
+		}
+		
 		return species;
 	}
 }

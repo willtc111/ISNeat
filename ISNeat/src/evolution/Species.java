@@ -11,6 +11,8 @@ public class Species {
 	private static final int IMMUNITY_TIME = 15;
 	private static final int HISTORY_LENGTH = 5;
 	
+	public int intendedSize;
+	
 	private int id;
 	private int startGen;
 	private double[] lastBestFitnesses;
@@ -39,6 +41,10 @@ public class Species {
 		organisms = organisms.subList(0, numSurvivors);
 	}
 	
+	public void clear() {
+		organisms = new LinkedList<Genome>();
+	}
+	
 	public Genome getBestGenome() {
 		Genome best = organisms.get(0);
 		for( Genome genome : organisms ) {
@@ -57,14 +63,17 @@ public class Species {
 	}
 	
 	/**
-	 * Checks if this species is available for termination due to stagnation.
-	 * Species are immune for a set number of generations.
+	 * Checks if this species is available for termination due to stagnation,
+	 * too low of fitness, and losing all members.
+	 * Species are immune for a set number of generations (see IMMUNITY_TIME)
 	 * 
 	 * @param generationNumber The current generation number
+	 * @param minFitness The minimum fitness value for the species to survive
 	 * @return True if species can be terminated, otherwise False
 	 */
-	public boolean canBeTerminated(int generationNumber) {
-		return (generationNumber - startGen) > IMMUNITY_TIME && !isStagnating();
+	public boolean canBeTerminated(int generationNumber, double minFitness) {
+		return ((generationNumber - startGen) > IMMUNITY_TIME && isStagnating() && getLastBestFitness() < minFitness)
+				|| (organisms.size() <= 0);
 	}
 	
 	/**
@@ -78,7 +87,7 @@ public class Species {
 		for( int i = 0; i < lastBestFitnesses.length - 1; i++ ) {
 			improvement += lastBestFitnesses[i] - lastBestFitnesses[i+1];
 		}
-		return improvement > 0;
+		return improvement <= 0;
 	}
 	
 	public Genome getRepresentative() {
@@ -99,6 +108,14 @@ public class Species {
 	}
 	
 	public double sumOfFitnesses() {
+		double sum = 0;
+		for( Genome genome : organisms ) {
+			sum += genome.getIndividualFitness();
+		}
+		return sum;
+	}
+	
+	public double sumOfSharedFitnesses() {
 		double sum = 0;
 		for( Genome genome : organisms ) {
 			sum += genome.getSharedFitness();
@@ -123,12 +140,26 @@ public class Species {
 		return lastBestFitnesses;
 	}
 	
+	public double getLastBestFitness() {
+		return lastBestFitnesses[0];
+	}
+	
 	public int getStartGen() {
 		return startGen;
 	}
 	
 	public int getId() {
 		return id;
+	}
+	
+	public String toString() {
+		Collections.sort(organisms, Genome.BY_INDIVIDUAL_FITNESS());
+		String output = "<" + getId() + ":  ";
+		for( Genome g : organisms ) {
+			output = output + g.toString();
+		}
+		output = output + " >";
+		return output;
 	}
 	
 	public static Comparator<Species> BY_BEST_INDIVIDUAL_FITNESS() {
