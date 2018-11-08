@@ -19,10 +19,18 @@ public interface Task {
 	public List<String> getOutputs();
 	
 	/**
-	 * Perform the task with the given neural network and calculate the fitness score
+	 * Perform the task with the given neural network and calculate the fitness score for the test data set
 	 * Score is in the range of 0.0  to 1.0
 	 * @param neuralNetwork	The neural network to test
 	 * @return				The fitness of the neural network
 	 */
-	public double calculateFitness(NeuralNetwork neuralNetwork);
+	public double calculateTestFitness(NeuralNetwork neuralNetwork);
+	
+	/**
+	 * Perform the task with the given neural network and calculate the fitness score for the training data set
+	 * Score is in the range of 0.0  to 1.0
+	 * @param neuralNetwork	The neural network to test
+	 * @return				The fitness of the neural network
+	 */
+	public double calculateTrainFitness(NeuralNetwork neuralNetwork);
 }

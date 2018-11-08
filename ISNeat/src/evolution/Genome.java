@@ -83,11 +83,11 @@ public class Genome {
 		List<Integer> fromOptions = new LinkedList<Integer>();
 		for( NodeGene n : nodes ) {
 			switch(n.getType()) {
-			case OUTPUT:
-				toOptions.add(n.getId());
-				break;
 			case INPUT:
 				fromOptions.add(n.getId());
+				break;
+			case OUTPUT:
+				toOptions.add(n.getId());
 				break;
 			case HIDDEN:
 				toOptions.add(n.getId());

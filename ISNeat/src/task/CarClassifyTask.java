@@ -14,15 +14,17 @@ import neuralnetwork.NeuralNetwork;
 
 public class CarClassifyTask implements Task {
 	
-	LinkedList<CarClassification> carList;
-	
+	LinkedList<CarClassification> trainCarList;
+	LinkedList<CarClassification> testCarList;
 	public CarClassifyTask( String filename ) throws FileNotFoundException {
 		// open data file and a scanner for it
 		Scanner scan = new Scanner( new File(filename) );
 		
-		carList = new LinkedList<CarClassification>();
+		trainCarList = new LinkedList<CarClassification>();
+		testCarList = new LinkedList<CarClassification>();
 		
 		// Read in lines
+		int count = 0;
 		while( scan.hasNextLine() ) {
 			String line = scan.nextLine();
 			
@@ -31,7 +33,12 @@ public class CarClassifyTask implements Task {
 			
 			// Create a new CarClassification and add it to the list
 			try {
-				carList.add( new CarClassification(attributes) );
+				CarClassification cc = new CarClassification(attributes);
+				if( count++ % 10 == 0 ) {
+					testCarList.add( cc );
+				} else {
+					trainCarList.add( cc );
+				}
 			} catch (Exception e) {
 				e.printStackTrace();	// no bueno...
 			}
@@ -42,7 +49,7 @@ public class CarClassifyTask implements Task {
 	
 	@Override
 	public List<String> getInputs() {
-		Set<String> inputSet = carList.getFirst().getInputs().keySet();
+		Set<String> inputSet = trainCarList.getFirst().getInputs().keySet();
 		List<String> inputList = new ArrayList<String>( inputSet );
 		Collections.sort( inputList );
 		return inputList;
@@ -54,11 +61,20 @@ public class CarClassifyTask implements Task {
 	}
 
 	@Override
-	public double calculateFitness(NeuralNetwork neuralNetwork) {
+	public double calculateTrainFitness(NeuralNetwork neuralNetwork) {
+		return calcFit(neuralNetwork, trainCarList);
+	}
+	
+	@Override
+	public double calculateTestFitness(NeuralNetwork neuralNetwork) {
+		return calcFit(neuralNetwork, testCarList);
+	}
+	
+	private double calcFit(NeuralNetwork neuralNetwork, List<CarClassification> carList) {
 		double numCorrect = 0;
 		for( CarClassification c : carList ) {
 			neuralNetwork.setInputs(c.getInputs());
-			neuralNetwork.updateAll();
+			neuralNetwork.updateUntilSteady(5);
 			numCorrect += c.outputCorrectness( neuralNetwork.getOutputs().get("classification") );
 		}
 		return numCorrect / carList.size();

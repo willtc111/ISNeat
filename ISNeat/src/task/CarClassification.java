@@ -10,9 +10,9 @@ public class CarClassification {
 	private static final Map<String, Double> classes;
 	static {
 		Map<String, Double> map = new HashMap<String, Double>();
-		map.put("unacc", 0.0);
-		map.put("acc",   ONETHIRD);
-		map.put("good",  TWOTHIRDS);
+		map.put("unacc", -1.0);
+		map.put("acc",   -ONETHIRD);
+		map.put("good",  -ONETHIRD);
 		map.put("vgood", 1.0);
 		classes = Collections.unmodifiableMap(map);
 	}
@@ -110,7 +110,7 @@ public class CarClassification {
 	 * @return		How correct the value is
 	 */
 	public double outputCorrectness( double out ) {
-		return 1.0 - outputWrongness(out);
+		return Math.max(0, 1.0 - outputWrongness(out));
 	}
 	
 	/**
@@ -119,10 +119,6 @@ public class CarClassification {
 	 * @return		How wrong the value is
 	 */
 	public double outputWrongness( double out ) {
-		// ensure output is in the range of 0.0 to 1.0
-		if( out > 1.0 ) out = 1.0;
-		else if( out < 0 ) out = 0;
-		
 		return Math.abs(outputValue - out);
 	}
 	

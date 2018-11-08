@@ -48,7 +48,7 @@ public class Species {
 	public Genome getBestGenome() {
 		Genome best = organisms.get(0);
 		for( Genome genome : organisms ) {
-			if( genome.getIndividualFitness() < best.getIndividualFitness() ) {
+			if( genome.getIndividualFitness() > best.getIndividualFitness() ) {
 				best = genome;
 			}
 		}
@@ -154,7 +154,7 @@ public class Species {
 	
 	public String toString() {
 		Collections.sort(organisms, Genome.BY_INDIVIDUAL_FITNESS());
-		String output = "<" + getId() + ":  ";
+		String output = String.format("<%d:  [%3.1f]  ", getId(), getLastBestFitness());
 		for( Genome g : organisms ) {
 			output = output + g.toString();
 		}

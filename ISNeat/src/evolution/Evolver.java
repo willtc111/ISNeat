@@ -1,6 +1,7 @@
 package evolution;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -18,7 +19,7 @@ import task.Task;
  * Primary class to perform the genetic algorithm
  */
 public class Evolver {
-	public static final double COMPATABILITY_THRESHOLD = 3.0;
+	public static final double COMPATABILITY_THRESHOLD = 2.0; //3.0;
 	public static final double C1 = 1.0;	// constant multiplier for excess gene differences
 	public static final double C2 = 1.0;	// constant multiplier for disjoint gene differences
 	public static final double C3 = 0.4;	// constant multiplier for gene weight differences
@@ -92,7 +93,7 @@ public class Evolver {
 
 		List<ConnectionGene> latestConnections = new LinkedList<ConnectionGene>();
 		
-		while( !isDone ) {
+		while( true ) {
 			generationNumber++;
 			System.out.println("Generation " + generationNumber + " starting!  " + population.size() + " species.");	// TODO: debug
 			List<Species> nextGenPopulation = new LinkedList<Species>();
@@ -104,7 +105,10 @@ public class Evolver {
 					// build the organism's neural network
 					NeuralNetwork network = NeuralNetworkBuilder.build(g, inputNodeMap, outputNodeMap);
 					// test the network on the task
-					double fitness = task.calculateFitness(network);
+					double fitness = task.calculateTrainFitness(network);
+					if( task.calculateTestFitness(network) > 0.95 ) {
+						return g;
+					}
 					// update the fitness value
 					g.setIndividualFitness(fitness);
 					
@@ -127,6 +131,7 @@ public class Evolver {
 			if( population.size() > 2 ) {
 				totalFitness = 0;
 				for( Species s : population ) {
+					// disregarding a species here is the only place it is allowed to be exterminated for poor fitness.
 					if( !s.canBeTerminated(generationNumber, averageFitness) ) {
 						totalFitness += s.sumOfFitnesses();
 						nextGenPopulation.add(s);
@@ -136,7 +141,7 @@ public class Evolver {
 				nextGenPopulation = population;
 			}
 			
-			// Kill off the weak genomes and perform crossover
+			// Kill off the weak genomes of each remaining species and perform crossover
 			List<Genome> newbies = new LinkedList<Genome>();
 			ListIterator<Species> ngpop = nextGenPopulation.listIterator();
 			while( ngpop.hasNext() ) {
@@ -144,11 +149,10 @@ public class Evolver {
 				// remove the weakest organisms
 				double thisSpeciesFitSum = s.sumOfFitnesses();
 				s.intendedSize = (int) Math.round(populationSize * (thisSpeciesFitSum / totalFitness));
-				if( s.intendedSize <= 0 ) {
-					
-				} else if( s.intendedSize == 1 ) {
+				if( s.intendedSize / 2 <= 1 ) {
 					// not enough organisms to do crossover within the species, but kill off any excess either way.
-					s.cullTheWeak(s.intendedSize);
+					// Allow two to stay, since it is supposed to be allowed to persist.  
+					s.cullTheWeak(1);
 					// go ahead and roll the dice to try inter-species mating.
 					if( rand.nextDouble() <= INTERSPECIES_MATING_RATE && nextGenPopulation.size() > 1 ) {
 						// Lucky duck!
@@ -160,43 +164,53 @@ public class Evolver {
 						newbies.add(crossover(parentA, parentB));
 					}
 					continue;
+				} else {
+					s.cullTheWeak(s.intendedSize / 2);
 				}
-				s.cullTheWeak(s.intendedSize / 2);
 				
 				// Do crossover if there is more than one member of the species remaining
 				if( s.size() >= 2 ) {
 					List<Genome> parents = new LinkedList<Genome>(s.getOrganisms());
 					parents.sort(Genome.BY_INDIVIDUAL_FITNESS());
-					
 					ListIterator<Genome> parIt = parents.listIterator();
 					// mate the best organism with a random lucky member of the species other than itself
 					Genome parentA = parIt.next();
-					Genome parentB;
+					Genome parentB = parents.get( rand.nextInt(parents.size()-1)+1 );
 					if( rand.nextDouble() <= INTERSPECIES_MATING_RATE && nextGenPopulation.size() > 1 ) {
 						// PSYCH, mate with a random member of a random other species instead
 						List<Species> otherSpecies = new LinkedList<Species>(nextGenPopulation);
 						otherSpecies.remove(s);
-						List<Genome> otherOrganisms = otherSpecies.get(rand.nextInt(otherSpecies.size())).getOrganisms();
-						parentB = otherOrganisms.get(rand.nextInt(otherOrganisms.size()));
+						// Pick a random non-empty species
+						Collections.shuffle(otherSpecies, rand);
+						for( Species randOtherSpecies : otherSpecies ) {
+							if( randOtherSpecies.size() > 0 ) {
+								List<Genome> otherOrganisms = randOtherSpecies.getOrganisms();
+								parentB = otherOrganisms.get(rand.nextInt(otherOrganisms.size()));
+								break;
+							}
+						}
 						
-					} else {
-						parentB = parents.get( rand.nextInt(parents.size()-1)+1 );
 					}
 					newbies.add(crossover(parentA, parentB));
 					
 					// mate every other organism with a random member of the species better than itself
 					while( parIt.hasNext() ) {
 						parentA = parIt.next();
+						int index = parIt.previousIndex()+1;
+						parentB = parents.get(rand.nextInt(index));
 						if( rand.nextDouble() <= INTERSPECIES_MATING_RATE && nextGenPopulation.size() > 1 ) {
 							// mate with a random member of a random other species instead
 							List<Species> otherSpecies = new LinkedList<Species>(nextGenPopulation);
 							otherSpecies.remove(s);
-							List<Genome> otherOrganisms = otherSpecies.get(rand.nextInt(otherSpecies.size())).getOrganisms();
-							parentB = otherOrganisms.get(rand.nextInt(otherOrganisms.size()));
-							
-						} else {
-							int index = parIt.previousIndex()+1;
-							parentB = parents.get(rand.nextInt(index));
+							// Pick a random non-empty species
+							Collections.shuffle(otherSpecies, rand);
+							for( Species randOtherSpecies : otherSpecies ) {
+								if( randOtherSpecies.size() > 0 ) {
+									List<Genome> otherOrganisms = randOtherSpecies.getOrganisms();
+									parentB = otherOrganisms.get(rand.nextInt(otherOrganisms.size()));
+									break;
+								}
+							}
 						}
 						newbies.add(crossover(parentA, parentB));
 					}
@@ -205,6 +219,7 @@ public class Evolver {
 			System.out.println("\tCrossover completed!  " + (newbies.size() + populationSize(nextGenPopulation)) + " individuals.");	// TODO: debug
 			
 			// do mutations on all the parents
+			System.out.print("\t\t"); // TODO: debug
 			for( Species s : nextGenPopulation ) {
 				List<Genome> genomesToMutate = null;
 				if( s.size() > 5 ) {
@@ -234,6 +249,7 @@ public class Evolver {
 				s.clear();
 				
 				// mutate the genomes
+				System.out.print(" ");	// TODO: debug
 				for( Genome g : genomesToMutate ) {
 					// mutate weights
 					g.mutateWeights(mutationChance, MUTATION_SCALAR, RANDOM_RESET_MUTATION_CHANCE );
@@ -244,29 +260,28 @@ public class Evolver {
 						if( change != null ) {
 							nextInnovNum++;
 							latestConnections.add(change);
-							System.out.println("\t\tAdded a connection!");	// TODO: debug
 						}
-					} else if( rand.nextDouble() < NODE_MUTATION_CHANCE ) {
+						System.out.print("-");	// TODO: debug
+					}
+					if( rand.nextDouble() < NODE_MUTATION_CHANCE ) {
 						// mutate nodes
 						List<ConnectionGene> changes = g.mutateAddNode(nextInnovNum, nextNodeNum, latestConnections);
 						if( changes != null ) {
 							nextInnovNum += 2;
 							latestConnections.addAll(changes);
 							nextNodeNum++;
-							System.out.println("\t\tAdded a node!");	// TODO: debug
 						}
+						System.out.print("=");	// TODO: debug
 					}
 					// add the mutated genome to the new organism pool.
 					newbies.add(g);
 				}
-				
 			}
-			System.out.println("\tMutation completed!  " + newbies.size() + " individuals.");	// TODO: debug
+			System.out.println("\n\tMutation completed!  " + newbies.size() + " individuals.");	// TODO: debug
 			
 			// add the newbies to the population
 			population = speciate(nextGenPopulation, newbies);
 		}
-		return best;
 	}
 	
 	private Genome crossover( Genome parentA, Genome parentB ) {
@@ -330,22 +345,6 @@ public class Evolver {
 		}
 		
 		return new Genome(new LinkedList<NodeGene>(childNodes), childGenes);
-		
-	}
-	
-	/**
-	 * For measuring how close the algorithm is to finding a solution as a whole
-	 * @return The best genome out of the entire populaiton
-	 */
-	private Genome getBest() {
-		Genome best = population.get(0).getBestGenome();
-		for( Species s : population ) {
-			Genome sBest = s.getBestGenome();
-			if( sBest.getIndividualFitness() < best.getIndividualFitness() ) {
-				best = sBest;
-			}
-		}
-		return best;
 	}
 	
 	private void addToPopulation(Genome genome) {

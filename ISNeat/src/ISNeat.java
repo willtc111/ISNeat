@@ -18,6 +18,7 @@ public class ISNeat {
 
 			Evolver evolver = new Evolver(cct, 100);
 			Genome best = evolver.evolve();
+			System.out.println(best);
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
