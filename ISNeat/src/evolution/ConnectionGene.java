@@ -64,7 +64,11 @@ public class ConnectionGene {
 	}
 
 	public String toString() {
-		return String.format("{%d:(%d,%d) %3.2f}", innov, in, out, weight);
+		if( enabled ) {
+			return String.format("{%d:(%d,%d) %3.2f}", innov, in, out, weight);
+		} else {
+			return String.format("{%d:(%d,%d) -.--}", innov, in, out);
+		}
 	}
 	
 	// Comparators:

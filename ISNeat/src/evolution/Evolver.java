@@ -19,7 +19,7 @@ import task.Task;
  * Primary class to perform the genetic algorithm
  */
 public class Evolver {
-	public static final double COMPATABILITY_THRESHOLD = 2.0; //3.0;
+	public static final double COMPATABILITY_THRESHOLD = 3.0;
 	public static final double C1 = 1.0;	// constant multiplier for excess gene differences
 	public static final double C2 = 1.0;	// constant multiplier for disjoint gene differences
 	public static final double C3 = 0.4;	// constant multiplier for gene weight differences
@@ -149,10 +149,10 @@ public class Evolver {
 				// remove the weakest organisms
 				double thisSpeciesFitSum = s.sumOfFitnesses();
 				s.intendedSize = (int) Math.round(populationSize * (thisSpeciesFitSum / totalFitness));
-				if( s.intendedSize / 2 <= 1 ) {
+				if( s.intendedSize / 2 <= 2 ) {
 					// not enough organisms to do crossover within the species, but kill off any excess either way.
 					// Allow two to stay, since it is supposed to be allowed to persist.  
-					s.cullTheWeak(1);
+					s.cullTheWeak(2);
 					// go ahead and roll the dice to try inter-species mating.
 					if( rand.nextDouble() <= INTERSPECIES_MATING_RATE && nextGenPopulation.size() > 1 ) {
 						// Lucky duck!

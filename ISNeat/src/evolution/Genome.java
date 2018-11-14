@@ -139,19 +139,19 @@ public class Genome {
 			return null;
 		} else {
 			// choose a connection to split
-			ConnectionGene removeMe = connections.get(new Random().nextInt(connections.size()));
-			connections.remove(removeMe);
+			ConnectionGene disableMe = connections.get(new Random().nextInt(connections.size()));
+			disableMe.disable();
 			
 			// make the new stuff
-			int from = removeMe.getIn();
-			int to = removeMe.getOut();
+			int from = disableMe.getIn();
+			int to = disableMe.getOut();
 			NodeGene newNode = new NodeGene(nextNodeNumber, NodeType.HIDDEN);
 			ConnectionGene firstConnection  = new ConnectionGene(innovationNumber,
 																 1.0,
 																 from,
 																 newNode.getId());
 			ConnectionGene secondConnection = new ConnectionGene(innovationNumber+1,
-																 removeMe.getWeight(),
+																 disableMe.getWeight(),
 																 newNode.getId(),
 																 to);
 			

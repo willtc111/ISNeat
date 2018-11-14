@@ -72,8 +72,8 @@ public class Species {
 	 * @return True if species can be terminated, otherwise False
 	 */
 	public boolean canBeTerminated(int generationNumber, double minFitness) {
-		return ((generationNumber - startGen) > IMMUNITY_TIME && isStagnating() && getLastBestFitness() < minFitness)
-				|| (organisms.size() <= 0);
+		return (organisms.size() <= 0) || 
+			   ((generationNumber - startGen) > IMMUNITY_TIME && isStagnating() && getLastBestFitness() < minFitness);
 	}
 	
 	/**
