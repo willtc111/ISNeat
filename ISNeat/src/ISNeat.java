@@ -13,7 +13,7 @@ import task.JumperTask;
 public class ISNeat {
 
 	public static void main(String[] args) {
-		JumperTask jt = new JumperTask( 1000 );
+		JumperTask jt = new JumperTask( 123456789, 5000 );
 
 		Evolver evolver = new Evolver(jt, 150);
 		Genome best = evolver.evolve();

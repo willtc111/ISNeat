@@ -29,7 +29,7 @@ public class Evolver {
 	
 	public static final double CONNECTION_MUTATION_CHANCE = 0.05;	// 0.3 if using large population (1000+)
 	public static final double NODE_MUTATION_CHANCE = 0.03;
-	public static final double MUTATION_SCALAR = 0.25;
+	public static final double MUTATION_SCALAR = 0.05;
 	public static final double RANDOM_RESET_MUTATION_CHANCE = 0.1;
 	
 	private int nextInnovNum;
@@ -96,6 +96,7 @@ public class Evolver {
 		while( true ) {
 			generationNumber++;
 			System.out.println("Generation " + generationNumber + " starting!  " + population.size() + " species.");	// TODO: debug
+			System.out.println(task.getInputs() + " " + task.getOutputs());
 			List<Species> nextGenPopulation = new LinkedList<Species>();
 			
 			// evaluate fitnesses
@@ -106,8 +107,10 @@ public class Evolver {
 					NeuralNetwork network = NeuralNetworkBuilder.build(g, inputNodeMap, outputNodeMap);
 					// test the network on the task
 					double fitness = task.calculateTrainFitness(network);
-					if( task.calculateTestFitness(network) > 0.95 ) {
-						return g;
+					if( fitness > 0.85 ) {
+						if( task.calculateTestFitness(network) > 0.95 ) {
+							return g;
+						}
 					}
 					// update the fitness value
 					g.setIndividualFitness(fitness);

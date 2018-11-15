@@ -11,23 +11,25 @@ import neuralnetwork.NeuralNetwork;
 
 public class JumperTask implements Task {
 
-	private static final double GRAVITY = 12.0;
-	private static final double INITIAL_JUMP_VELOCITY = 10.0;
-	private static final double MAX_WIDTH = 10.0;
-	private static final double MAX_SPEED = 10.0;
+	private static final double GRAVITY = 1.0;
+	private static final double INITIAL_JUMP_VELOCITY = 6.0;
+	private static final double MAX_WIDTH = 5.0;
+	private static final double MAX_SPEED = 1.0;
 	private static final double DELTA_SPEED = 0.001;
 	private static final double VIEW_DISTANCE = 100.0;
+	private static final int MIN_OBSTACLE_SPACING_TIME = 15;
+	private static final double GROUND_OBSTACLE_CHANCE = 0.8;
 	
-	private final Random rand;
+	private final Random trainRandom;
 	private final double goal;
 	
 	public JumperTask( long distanceGoal ) {
-		rand = new Random();
+		trainRandom = new Random();
 		goal = distanceGoal;
 	}
 	
 	public JumperTask( long seed, long distanceGoal ) {
-		rand = new Random( seed );
+		trainRandom = new Random( seed );
 		goal = distanceGoal;
 	}
 	
@@ -42,9 +44,9 @@ public class JumperTask implements Task {
 		return Arrays.asList("jump");
 	}
 
-	public double calculateFitness( NeuralNetwork neuralNetwork ) {
+	public double calculateFitness( boolean doDisplay, Random rand, NeuralNetwork neuralNetwork ) {
 		double traveled = 0.0;
-		double speed = 10.0;
+		double speed = 1;
 		double vertVelocity = 0.0;
 		double vertPos = 0.0;
 		boolean onGround = true;
@@ -52,6 +54,10 @@ public class JumperTask implements Task {
 		
 		HashMap<String,Double> inputs = new HashMap<String,Double>();
 		inputs.put("bias", 1.0);
+		int timeToNextObstacle = MIN_OBSTACLE_SPACING_TIME + rand.nextInt(MIN_OBSTACLE_SPACING_TIME);
+		if( doDisplay ) {
+			System.out.println();				   //////  TODO: DEBUG
+		}
 		while( traveled <= goal ) {
 			// update the current speed
 			speed += DELTA_SPEED;
@@ -71,14 +77,13 @@ public class JumperTask implements Task {
 			neuralNetwork.updateOnce();
 			double jumpAmount = neuralNetwork.getOutputs().get("jump");
 			
-			//// update game ////
+			//// Update The Game ////
 
 			// check if the player wants to jump (and do so if they can)
 			if( jumpAmount > 0.5 && onGround ) {
 				vertVelocity = jumpAmount * INITIAL_JUMP_VELOCITY;
 				onGround = false;
 			}
-			
 			
 			// make physical changes
 			vertVelocity -= GRAVITY;
@@ -94,41 +99,35 @@ public class JumperTask implements Task {
 			
 			// move the obstacles
 			ListIterator<JumperObstacle> o = obstacles.listIterator();
+			boolean haveCollided = false;
 			while( o.hasNext() ) {
 				JumperObstacle cur = o.next();
-				cur.distance = cur.distance - speed;
+				haveCollided = haveCollided || cur.move(speed, onGround);
 				if( cur.isPassed() ) {
 					o.remove();
 				}
 			}
-			
-			//// check for failure ////
-			if( !obstacles.isEmpty() && obstacles.getFirst().isWithinRange() ) {
-				if( obstacles.getFirst().isInAir ) {
-					// is the player jumping into an aerial obstacle?
-					if( !onGround ) {
-						break;
-					}
-				} else {
-					if( onGround ) {
-						break;
-					}
-				}
+			if( haveCollided ) {
+				break;
 			}
 			
-			//// add new obstacles ////
-			if( obstacles.isEmpty() ) {
-				// make a new obstacle at the limit of the view
+			// add a new obstacle if the time is right
+			timeToNextObstacle--;
+			if( timeToNextObstacle <= 0 ) {
+				// reset the countdown
+				timeToNextObstacle = MIN_OBSTACLE_SPACING_TIME + rand.nextInt(MIN_OBSTACLE_SPACING_TIME);
+				// add a new obstacle
+				boolean obstacleType = traveled > 500 && rand.nextDouble() > GROUND_OBSTACLE_CHANCE;
 				JumperObstacle newObstacle = new JumperObstacle(
-						rand.nextBoolean(),
-						VIEW_DISTANCE,
-						rand.nextDouble()*MAX_WIDTH
+						obstacleType,
+						Math.max(2, rand.nextDouble()*MAX_WIDTH),
+						VIEW_DISTANCE
 				);
 				obstacles.addLast( newObstacle );
-			} else {
-				// ADD AN OBSTACLE ONLY IF IT HAS BEEN A CERTAIN AMOUNT OF TIME OR DISTANCE, IDK...
 			}
-			
+			if( doDisplay ) {
+				textDisplay(obstacles, vertPos, traveled); //////  TODO: DEBUG
+			}
 		}
 		
 		double fitness = traveled / goal;
@@ -137,12 +136,41 @@ public class JumperTask implements Task {
 	
 	@Override
 	public double calculateTestFitness( NeuralNetwork neuralNetwork ) {
-		return calculateFitness( neuralNetwork );
+		return calculateFitness( true, new Random(), neuralNetwork );
 	}
 
 	@Override
 	public double calculateTrainFitness( NeuralNetwork neuralNetwork ) {
-		return calculateFitness( neuralNetwork );
+		return calculateFitness( false, trainRandom, neuralNetwork );
+	}
+	
+	private void textDisplay(List<JumperObstacle> obstacles, double height, double traveled ) {
+		int offset = (int) Math.ceil(MAX_WIDTH)+2;
+		int viewSize = (int) (Math.ceil(VIEW_DISTANCE) + (2 * offset));
+		
+		String[] text = new String[viewSize]; 
+		
+		for( JumperObstacle jo : obstacles ) {
+			for( int i = (int) Math.floor(jo.distance); i < Math.floor(jo.rearDistance()); i++ ) {
+				if( jo.isInAir ) {
+					text[offset + i] = "o";
+				} else {
+					text[offset + i] = "u";
+				}
+			}
+		}
+		text[offset] = String.format("%1.0f", height);
+		text[viewSize - offset] = "|";
+		
+		String disp = String.format("%5.0f\t", traveled);
+		for( int i = 0; i < viewSize; i++ ) {
+			if( text[i] == null ) {
+				disp = disp.concat(".");
+			} else {
+				disp = disp.concat(text[i]);
+			}
+		}
+		System.out.println(disp);
 	}
 
 }

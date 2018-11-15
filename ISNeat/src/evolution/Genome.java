@@ -64,7 +64,8 @@ public class Genome {
 				} else {
 					// mutate this connection by a normally distributed amount (mean = 0)
 					double alteration = mutationScalar * rand.nextGaussian();
-					c.setWeight(c.getWeight() + alteration);
+					// but be sure to keep it within the bounds
+					c.setWeight( c.getWeight() + alteration );
 				}
 			}
 		}
@@ -87,8 +88,6 @@ public class Genome {
 				fromOptions.add(n.getId());
 				break;
 			case OUTPUT:
-				toOptions.add(n.getId());
-				break;
 			case HIDDEN:
 				toOptions.add(n.getId());
 				fromOptions.add(n.getId());
@@ -312,7 +311,7 @@ public class Genome {
 	}
 	
 	public String toString() {
-		String s = String.format("#{%3.1f ", fitness);
+		String s = String.format("#{%3.2f ", fitness);
 		for( ConnectionGene g : connections ) {
 			s = s + " " + g;
 		}

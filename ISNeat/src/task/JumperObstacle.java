@@ -20,8 +20,15 @@ public class JumperObstacle {
 		}
 	}
 	
-	public void move(double speed) {
+	/**
+	 * 
+	 * @param speed
+	 * @param playerIsOnGround
+	 * @return true if a collision occurred, otherwise false
+	 */
+	public boolean move(double speed, boolean playerIsOnGround) {
 		distance -= speed;
+		return (distance <= 0) && (isInAir != playerIsOnGround);
 	}
 	
 	public double rearDistance() {
@@ -39,5 +46,4 @@ public class JumperObstacle {
 			return false;
 		}
 	}
-	
 }
