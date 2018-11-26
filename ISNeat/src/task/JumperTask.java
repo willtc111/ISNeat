@@ -11,12 +11,12 @@ import neuralnetwork.NeuralNetwork;
 
 public class JumperTask implements Task {
 
-	private static final double GRAVITY = 12.0;
+	private static final double GRAVITY = 1.0;
 	private static final double INITIAL_JUMP_VELOCITY = 10.0;
-	private static final double MAX_WIDTH = 10.0;
-	private static final double MAX_SPEED = 10.0;
+	private static final double MAX_WIDTH = 150.0;
+	private static final double MAX_SPEED = 20.0;
 	private static final double DELTA_SPEED = 0.001;
-	private static final double VIEW_DISTANCE = 100.0;
+	private static final double VIEW_DISTANCE = 1000.0;
 	
 	private final Random rand;
 	private final double goal;
@@ -43,8 +43,9 @@ public class JumperTask implements Task {
 	}
 
 	public double calculateFitness( NeuralNetwork neuralNetwork ) {
-		double traveled = 0.0;
+		long traveled = 0;
 		double speed = 10.0;
+		int timeToNextObstacle = 60;
 		double vertVelocity = 0.0;
 		double vertPos = 0.0;
 		boolean onGround = true;
@@ -54,7 +55,7 @@ public class JumperTask implements Task {
 		inputs.put("bias", 1.0);
 		while( traveled <= goal ) {
 			// update the current speed
-			speed += DELTA_SPEED;
+			speed = Math.min(speed + DELTA_SPEED, MAX_SPEED);
 						
 			// get output of network for current inputs
 			inputs.put("speed", (speed / MAX_SPEED));
@@ -83,7 +84,7 @@ public class JumperTask implements Task {
 			// make physical changes
 			vertVelocity -= GRAVITY;
 			vertPos += vertVelocity;
-			traveled += speed;
+			traveled++;
 			
 			// deal with the ground
 			if( vertPos <= 0.0 ) {
@@ -116,17 +117,19 @@ public class JumperTask implements Task {
 				}
 			}
 			
+			timeToNextObstacle--;
 			//// add new obstacles ////
-			if( obstacles.isEmpty() ) {
+			if( timeToNextObstacle <= 0 ) {
+				// Check if the player is far enough to qualify for air obstacles
+				boolean type = traveled > 750 ? rand.nextBoolean() : false;
 				// make a new obstacle at the limit of the view
 				JumperObstacle newObstacle = new JumperObstacle(
-						rand.nextBoolean(),
-						VIEW_DISTANCE,
-						rand.nextDouble()*MAX_WIDTH
+						type,
+						rand.nextDouble()*MAX_WIDTH,
+						VIEW_DISTANCE
 				);
 				obstacles.addLast( newObstacle );
-			} else {
-				// ADD AN OBSTACLE ONLY IF IT HAS BEEN A CERTAIN AMOUNT OF TIME OR DISTANCE, IDK...
+				timeToNextObstacle = 60 + rand.nextInt(60);
 			}
 			
 		}

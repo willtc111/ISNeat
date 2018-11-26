@@ -154,7 +154,7 @@ public class Species {
 	
 	public String toString() {
 		Collections.sort(organisms, Genome.BY_INDIVIDUAL_FITNESS());
-		String output = String.format("<%d:  [%3.1f]  ", getId(), getLastBestFitness());
+		String output = String.format("<%d:\t[%3.3f][%3.3f] %d: ", getId(), sumOfSharedFitnesses(), getLastBestFitness(), size());
 		for( Genome g : organisms ) {
 			output = output + g.toString();
 		}

@@ -22,14 +22,15 @@ public class Evolver {
 	public static final double COMPATABILITY_THRESHOLD = 3.0;
 	public static final double C1 = 1.0;	// constant multiplier for excess gene differences
 	public static final double C2 = 1.0;	// constant multiplier for disjoint gene differences
-	public static final double C3 = 0.4;	// constant multiplier for gene weight differences
+	public static final double C3 = 0.3;	// constant multiplier for gene weight differences
 	
 	public static final double INTERSPECIES_MATING_RATE = 0.001;
 	public static final double ENABLE_GENE_CHANCE = 0.75;
 	
+	public static final double WEIGHT_MUTATION_CHANCE = 0.8;
 	public static final double CONNECTION_MUTATION_CHANCE = 0.05;	// 0.3 if using large population (1000+)
-	public static final double NODE_MUTATION_CHANCE = 0.03;
-	public static final double MUTATION_SCALAR = 0.25;
+	public static final double NODE_MUTATION_CHANCE = 0.01;
+	public static final double MUTATION_SCALAR = 0.05;
 	public static final double RANDOM_RESET_MUTATION_CHANCE = 0.1;
 	
 	private int nextInnovNum;
@@ -88,12 +89,13 @@ public class Evolver {
 	public Genome evolve() {
 		Genome best = null;
 		Random rand = new Random();
-		double mutationChance = 0.8;
-		boolean isDone = false;
 
 		List<ConnectionGene> latestConnections = new LinkedList<ConnectionGene>();
 		
 		while( true ) {
+			
+			try {Thread.sleep(500);} catch (InterruptedException e) {}	// TODO: debug
+			
 			generationNumber++;
 			System.out.println("Generation " + generationNumber + " starting!  " + population.size() + " species.");	// TODO: debug
 			List<Species> nextGenPopulation = new LinkedList<Species>();
@@ -133,12 +135,18 @@ public class Evolver {
 				for( Species s : population ) {
 					// disregarding a species here is the only place it is allowed to be exterminated for poor fitness.
 					if( !s.canBeTerminated(generationNumber, averageFitness) ) {
-						totalFitness += s.sumOfFitnesses();
+						totalFitness += s.sumOfSharedFitnesses();
 						nextGenPopulation.add(s);
+					} else {
+						System.out.println("KILLING SPECIES " + s.getId() + "!");
 					}
 				}
 			} else {
-				nextGenPopulation = population;
+				totalFitness = 0;
+				for( Species s : population ) {
+					totalFitness += s.sumOfSharedFitnesses();
+					nextGenPopulation.add(s);
+				}
 			}
 			
 			// Kill off the weak genomes of each remaining species and perform crossover
@@ -147,7 +155,7 @@ public class Evolver {
 			while( ngpop.hasNext() ) {
 				Species s = ngpop.next();
 				// remove the weakest organisms
-				double thisSpeciesFitSum = s.sumOfFitnesses();
+				double thisSpeciesFitSum = s.sumOfSharedFitnesses();
 				s.intendedSize = (int) Math.round(populationSize * (thisSpeciesFitSum / totalFitness));
 				if( s.intendedSize / 2 <= 2 ) {
 					// not enough organisms to do crossover within the species, but kill off any excess either way.
@@ -249,10 +257,12 @@ public class Evolver {
 				s.clear();
 				
 				// mutate the genomes
-				System.out.print(" ");	// TODO: debug
+				System.out.print("|");	// TODO: debug
 				for( Genome g : genomesToMutate ) {
 					// mutate weights
-					g.mutateWeights(mutationChance, MUTATION_SCALAR, RANDOM_RESET_MUTATION_CHANCE );
+					if( rand.nextDouble() < WEIGHT_MUTATION_CHANCE ) {
+						g.mutateWeights( MUTATION_SCALAR, RANDOM_RESET_MUTATION_CHANCE );
+					}
 					// structural mutations
 					if( rand.nextDouble() < CONNECTION_MUTATION_CHANCE ) {
 						// mutate connections

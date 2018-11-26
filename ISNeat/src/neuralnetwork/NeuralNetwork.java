@@ -22,7 +22,7 @@ public class NeuralNetwork {
 		// copy states array
 		double[] newStates = new double[states.length];
 		for( int t = 0; t < states.length; t++ ) {
-			newStates[t] = states[t];
+			newStates[t] = 0.0;
 		}
 		
 		for( int t = 0; t < states.length; t++ ) {
@@ -36,6 +36,8 @@ public class NeuralNetwork {
 			}
 			if( count > 0 ) {
 				newStates[t] /= count;	// Normalize
+			} else {
+				newStates[t] = states[t];
 			}
 		}
 		

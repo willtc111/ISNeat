@@ -39,7 +39,6 @@ public class ConnectionGene {
 	}
 	
 	public void setWeight( Double weight ) {
-		// TODO: figure out if this should actually be bounded.
 		this.weight = Math.max(-1.0, Math.min(1.0, weight));
 	}
 	

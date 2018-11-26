@@ -40,4 +40,8 @@ public class JumperObstacle {
 		}
 	}
 	
+	public String toString() {
+		return String.format("%s of width %f and dist %f", isInAir ? "duck" : "jump", width, distance);
+	}
+	
 }

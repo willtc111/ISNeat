@@ -46,26 +46,23 @@ public class Genome {
 			this.connections = new ArrayList<ConnectionGene>();
 		}
 	}
-
+	
 	/**
 	 * Mutate this genome's connection weights.
 	 * 
-	 * @param mutationChance The chance of a mutation occurring for any given weight
 	 * @param mutationScalar Scalar for the magnitude of any weight adjustment 
 	 * @param randomResetChance The chance to simply assign a new random weight
 	 */
-	public void mutateWeights( double mutationChance, double mutationScalar, double randomResetChance ) {
+	public void mutateWeights( double mutationScalar, double randomResetChance ) {
 		Random rand = new Random();
 		for( ConnectionGene c : connections ) {
-			if( rand.nextDouble() < mutationChance ) {
-				if( rand.nextDouble() < randomResetChance ) {
-					// mutate by setting weight randomly
-					c.setWeight(randomWeight());
-				} else {
-					// mutate this connection by a normally distributed amount (mean = 0)
-					double alteration = mutationScalar * rand.nextGaussian();
-					c.setWeight(c.getWeight() + alteration);
-				}
+			if( rand.nextDouble() < randomResetChance ) {
+				// mutate by setting weight randomly
+				c.setWeight(randomWeight());
+			} else {
+				// mutate this connection by a normally distributed amount (mean = 0)
+				double alteration = mutationScalar * rand.nextGaussian();
+				c.setWeight(c.getWeight() + alteration);
 			}
 		}
 	}
@@ -169,7 +166,7 @@ public class Genome {
 							connections.add(firstConnection);
 							
 							secondConnection = c2.clone();
-							secondConnection.setWeight(Math.random());
+							secondConnection.setWeight(disableMe.getWeight());
 							connections.add(secondConnection);
 							
 							// Return null to signify that new connections and a new node were not made
@@ -312,7 +309,7 @@ public class Genome {
 	}
 	
 	public String toString() {
-		String s = String.format("#{%3.1f ", fitness);
+		String s = String.format("#{%3.3f ", fitness);
 		for( ConnectionGene g : connections ) {
 			s = s + " " + g;
 		}
