@@ -72,14 +72,13 @@ public class JumperTask implements Task {
 			neuralNetwork.updateOnce();
 			double jumpAmount = neuralNetwork.getOutputs().get("jump");
 			
-			//// update game ////
+			//// Update The Game ////
 
 			// check if the player wants to jump (and do so if they can)
 			if( jumpAmount > 0.5 && onGround ) {
 				vertVelocity = jumpAmount * INITIAL_JUMP_VELOCITY;
 				onGround = false;
 			}
-			
 			
 			// make physical changes
 			vertVelocity -= GRAVITY;
@@ -95,26 +94,16 @@ public class JumperTask implements Task {
 			
 			// move the obstacles
 			ListIterator<JumperObstacle> o = obstacles.listIterator();
+			boolean haveCollided = false;
 			while( o.hasNext() ) {
 				JumperObstacle cur = o.next();
-				cur.distance = cur.distance - speed;
+				haveCollided = haveCollided || cur.move(speed, onGround);
 				if( cur.isPassed() ) {
 					o.remove();
 				}
 			}
-			
-			//// check for failure ////
-			if( !obstacles.isEmpty() && obstacles.getFirst().isWithinRange() ) {
-				if( obstacles.getFirst().isInAir ) {
-					// is the player jumping into an aerial obstacle?
-					if( !onGround ) {
-						break;
-					}
-				} else {
-					if( onGround ) {
-						break;
-					}
-				}
+			if( haveCollided ) {
+				break;
 			}
 			
 			timeToNextObstacle--;
@@ -132,6 +121,8 @@ public class JumperTask implements Task {
 				timeToNextObstacle = 60 + rand.nextInt(60);
 			}
 			
+//			textDisplay(obstacles, vertPos, traveled); //////  TODO: DEBUG
+			
 		}
 		
 		double fitness = traveled / goal;
@@ -146,6 +137,35 @@ public class JumperTask implements Task {
 	@Override
 	public double calculateTrainFitness( NeuralNetwork neuralNetwork ) {
 		return calculateFitness( neuralNetwork );
+	}
+	
+	private void textDisplay(List<JumperObstacle> obstacles, double height, double traveled ) {
+		int offset = (int) Math.ceil(MAX_WIDTH)+2;
+		int viewSize = (int) (Math.ceil(VIEW_DISTANCE) + (2 * offset));
+		
+		String[] text = new String[viewSize]; 
+		
+		for( JumperObstacle jo : obstacles ) {
+			for( int i = (int) Math.floor(jo.distance); i < Math.floor(jo.rearDistance()); i++ ) {
+				if( jo.isInAir ) {
+					text[offset + i] = "o";
+				} else {
+					text[offset + i] = "u";
+				}
+			}
+		}
+		text[offset] = String.format("%1.0f", height);
+		text[viewSize - offset] = "|";
+		
+		String disp = String.format("%5.0f\t", traveled);
+		for( int i = 0; i < viewSize; i++ ) {
+			if( text[i] == null ) {
+				disp = disp.concat(".");
+			} else {
+				disp = disp.concat(text[i]);
+			}
+		}
+		System.out.println(disp);
 	}
 
 }

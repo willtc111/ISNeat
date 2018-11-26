@@ -98,6 +98,7 @@ public class Evolver {
 			
 			generationNumber++;
 			System.out.println("Generation " + generationNumber + " starting!  " + population.size() + " species.");	// TODO: debug
+			System.out.println("\t" + task.getInputs() + " " + task.getOutputs());
 			List<Species> nextGenPopulation = new LinkedList<Species>();
 			
 			// evaluate fitnesses
@@ -108,8 +109,10 @@ public class Evolver {
 					NeuralNetwork network = NeuralNetworkBuilder.build(g, inputNodeMap, outputNodeMap);
 					// test the network on the task
 					double fitness = task.calculateTrainFitness(network);
-					if( task.calculateTestFitness(network) > 0.95 ) {
-						return g;
+					if( fitness > 0.85 ) {
+						if( task.calculateTestFitness(network) > 0.95 ) {
+							return g;
+						}
 					}
 					// update the fitness value
 					g.setIndividualFitness(fitness);

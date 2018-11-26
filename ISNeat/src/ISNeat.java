@@ -1,8 +1,5 @@
-import java.io.FileNotFoundException;
-
 import evolution.Evolver;
 import evolution.Genome;
-import task.CarClassifyTask;
 import task.JumperTask;
 
 /**

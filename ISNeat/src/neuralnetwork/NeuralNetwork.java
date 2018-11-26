@@ -27,15 +27,14 @@ public class NeuralNetwork {
 		
 		for( int t = 0; t < states.length; t++ ) {
 			// update the newState node t using the values from the old state and connection weights.
-			double count = 0;
+			double sum = 0;
 			for( int f = 0; f < states.length; f++ ) {
 				if( connections[f][t] != 0 ) {
-					count++;	// keep track of number of connections for normalization
-					newStates[t] += states[f] * connections[f][t];
+					sum += states[f] * connections[f][t];
 				}
 			}
-			if( count > 0 ) {
-				newStates[t] /= count;	// Normalize
+			if( sum > 0 ) {
+				newStates[t] = 1 / (1 + Math.pow(Math.E, -4.9 * sum));
 			} else {
 				newStates[t] = states[t];
 			}

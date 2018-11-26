@@ -84,8 +84,6 @@ public class Genome {
 				fromOptions.add(n.getId());
 				break;
 			case OUTPUT:
-				toOptions.add(n.getId());
-				break;
 			case HIDDEN:
 				toOptions.add(n.getId());
 				fromOptions.add(n.getId());
