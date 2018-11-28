@@ -17,16 +17,20 @@ public class JumperTask implements Task {
 	private static final double MAX_SPEED = 20.0;
 	private static final double DELTA_SPEED = 0.001;
 	private static final double VIEW_DISTANCE = 1000.0;
-	
-	private final Random rand;
+
 	private final double goal;
+	private final long seed;
+	
+	private Random rand;
 	
 	public JumperTask( long distanceGoal ) {
 		rand = new Random();
+		seed = rand.nextLong();
 		goal = distanceGoal;
 	}
 	
 	public JumperTask( long seed, long distanceGoal ) {
+		this.seed = seed;
 		rand = new Random( seed );
 		goal = distanceGoal;
 	}
@@ -110,7 +114,7 @@ public class JumperTask implements Task {
 			//// add new obstacles ////
 			if( timeToNextObstacle <= 0 ) {
 				// Check if the player is far enough to qualify for air obstacles
-				boolean type = traveled > 750 ? rand.nextBoolean() : false;
+				boolean type = traveled > goal/2 ? rand.nextBoolean() : false;
 				// make a new obstacle at the limit of the view
 				JumperObstacle newObstacle = new JumperObstacle(
 						type,
@@ -136,9 +140,11 @@ public class JumperTask implements Task {
 
 	@Override
 	public double calculateTrainFitness( NeuralNetwork neuralNetwork ) {
+		rand = new Random(seed);
 		return calculateFitness( neuralNetwork );
 	}
 	
+	@SuppressWarnings("unused")
 	private void textDisplay(List<JumperObstacle> obstacles, double height, double traveled ) {
 		int offset = (int) Math.ceil(MAX_WIDTH)+2;
 		int viewSize = (int) (Math.ceil(VIEW_DISTANCE) + (2 * offset));

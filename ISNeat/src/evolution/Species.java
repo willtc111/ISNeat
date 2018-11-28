@@ -4,19 +4,16 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 
 public class Species {
 
 	private static final int IMMUNITY_TIME = 15;
-	private static final int HISTORY_LENGTH = 5;
 	
 	public int intendedSize;
 	
 	private int id;
 	private int startGen;
-	private double[] lastBestFitnesses;
-	
+	private int gensSinceImprovement = 0;
 	private List<Genome> organisms;
 	private Genome representative = null;
 	
@@ -24,15 +21,8 @@ public class Species {
 	public Species( int startGen, int id, List<Genome> firstMembers ) {
 		this.id = id;
 		this.startGen = startGen;
-		lastBestFitnesses = new double[HISTORY_LENGTH];
 		organisms = firstMembers;
-	}
-	
-	public void updateFitnessHistory() {
-		for( int i = 0; i < lastBestFitnesses.length - 1; i++ ) {
-			lastBestFitnesses[i+1] = lastBestFitnesses[i];
-		}
-		lastBestFitnesses[0] = getBestGenome().getIndividualFitness();
+		representative = getBestGenome();
 	}
 	
 	public void cullTheWeak( int numSurvivors ) {
@@ -45,13 +35,13 @@ public class Species {
 		organisms = new LinkedList<Genome>();
 	}
 	
+	public double getBestFitness() {
+		return getBestGenome().getIndividualFitness();
+	}
+	
 	public Genome getBestGenome() {
+		organisms.sort(Genome.BY_INDIVIDUAL_FITNESS());
 		Genome best = organisms.get(0);
-		for( Genome genome : organisms ) {
-			if( genome.getIndividualFitness() > best.getIndividualFitness() ) {
-				best = genome;
-			}
-		}
 		return best; 
 	}
 	
@@ -73,7 +63,7 @@ public class Species {
 	 */
 	public boolean canBeTerminated(int generationNumber, double minFitness) {
 		return (organisms.size() <= 0) || 
-			   ((generationNumber - startGen) > IMMUNITY_TIME && isStagnating() && getLastBestFitness() < minFitness);
+			   ((generationNumber - startGen) > IMMUNITY_TIME && isStagnating() && getBestFitness() < minFitness);
 	}
 	
 	/**
@@ -83,11 +73,7 @@ public class Species {
 	 * @return True if net improvement is not greater than 0, otherwise false
 	 */
 	public boolean isStagnating() {
-		double improvement = 0;
-		for( int i = 0; i < lastBestFitnesses.length - 1; i++ ) {
-			improvement += lastBestFitnesses[i] - lastBestFitnesses[i+1];
-		}
-		return improvement <= 0;
+		return gensSinceImprovement > IMMUNITY_TIME;
 	}
 	
 	public Genome getRepresentative() {
@@ -98,7 +84,13 @@ public class Species {
 	}
 	
 	public void updateRepresentative() {
-		representative = organisms.get(new Random().nextInt(organisms.size()));
+		Genome contender = getBestGenome();
+		if( representative == null || representative.getIndividualFitness() < contender.getIndividualFitness() ) {
+			representative = new Genome(contender);
+			gensSinceImprovement = 0;
+		} else {
+			gensSinceImprovement++;
+		}
 	}
 	
 	public void shareFitnesses() {
@@ -124,7 +116,7 @@ public class Species {
 	}
 	
 	public List<Genome> getOrganisms() {
-		Collections.sort(organisms, Genome.BY_INDIVIDUAL_FITNESS());
+		organisms.sort(Genome.BY_INDIVIDUAL_FITNESS());
 		return organisms;
 	}
 	
@@ -134,14 +126,6 @@ public class Species {
 	
 	public int size() {
 		return organisms.size();
-	}
-	
-	public double[] getLastBestFitnesses() {
-		return lastBestFitnesses;
-	}
-	
-	public double getLastBestFitness() {
-		return lastBestFitnesses[0];
 	}
 	
 	public int getStartGen() {
@@ -154,10 +138,12 @@ public class Species {
 	
 	public String toString() {
 		Collections.sort(organisms, Genome.BY_INDIVIDUAL_FITNESS());
-		String output = String.format("<%d:\t[%3.3f][%3.3f] %d: ", getId(), sumOfSharedFitnesses(), getLastBestFitness(), size());
+		String output = String.format("<%d:\t[%3.3f][%3.3f] %d: ", getId(), sumOfSharedFitnesses(), getBestFitness(), size());
+/*
 		for( Genome g : organisms ) {
 			output = output + g.toString();
 		}
+*/
 		output = output + " >";
 		return output;
 	}
@@ -166,7 +152,7 @@ public class Species {
 		return new Comparator<Species>() {
 			@Override
 			public int compare(Species a, Species b) {
-				return Genome.BY_INDIVIDUAL_FITNESS().compare(a.getBestGenome(), b.getBestGenome());
+				return -1 * Genome.BY_INDIVIDUAL_FITNESS().compare(a.getBestGenome(), b.getBestGenome());
 			}
 		};
 	}
@@ -175,7 +161,16 @@ public class Species {
 		return new Comparator<Species>() {
 			@Override
 			public int compare(Species a, Species b) {
-				return Genome.BY_SHARED_FITNESS().compare(a.getBestGenome(), b.getBestGenome());
+				return -1 * Genome.BY_SHARED_FITNESS().compare(a.getBestGenome(), b.getBestGenome());
+			}
+		};
+	}
+	
+	public static Comparator<Species> BY_ID() {
+		return new Comparator<Species>() {
+			@Override
+			public int compare(Species a, Species b) {
+				return Integer.compare(a.getId(), b.getId());
 			}
 		};
 	}

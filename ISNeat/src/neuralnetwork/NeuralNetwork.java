@@ -28,12 +28,14 @@ public class NeuralNetwork {
 		for( int t = 0; t < states.length; t++ ) {
 			// update the newState node t using the values from the old state and connection weights.
 			double sum = 0;
+			boolean isUpdated = false;
 			for( int f = 0; f < states.length; f++ ) {
 				if( connections[f][t] != 0 ) {
+					isUpdated = true;
 					sum += states[f] * connections[f][t];
 				}
 			}
-			if( sum > 0 ) {
+			if( isUpdated ) {
 				newStates[t] = 1 / (1 + Math.pow(Math.E, -4.9 * sum));
 			} else {
 				newStates[t] = states[t];

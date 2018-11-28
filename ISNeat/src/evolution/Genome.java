@@ -22,6 +22,7 @@ public class Genome {
 	 */
 	public Genome( Genome genome ) {
 		this(genome.getNodes(), genome.getConnections());
+		this.fitness = genome.getIndividualFitness();
 	}
 	
 	/**
